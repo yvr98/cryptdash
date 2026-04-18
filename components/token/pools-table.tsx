@@ -70,6 +70,111 @@ function changeColor(value: number | null | undefined): string {
   return "text-[color:var(--muted)]";
 }
 
+/**
+ * Build a truncated list of page numbers with ellipsis gaps.
+ * Always shows first 2, last 2, and ±1 around the current page.
+ */
+function getPageNumbers(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const pages = new Set<number>();
+  // Always show first 2 and last 2
+  pages.add(1);
+  pages.add(2);
+  pages.add(total - 1);
+  pages.add(total);
+  // Neighbors of current
+  for (let i = current - 1; i <= current + 1; i++) {
+    if (i >= 1 && i <= total) pages.add(i);
+  }
+
+  const sorted = [...pages].sort((a, b) => a - b);
+  const result: (number | "…")[] = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push("…");
+    result.push(sorted[i]);
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Pagination controls (reused at bottom of both mobile & desktop layouts)
+// ---------------------------------------------------------------------------
+
+function PaginationNav({
+  currentPage,
+  pageCount,
+  onPageChange,
+  totalPools,
+  visibleCount,
+}: {
+  currentPage: number;
+  pageCount: number;
+  onPageChange: (page: number) => void;
+  totalPools: number;
+  visibleCount: number;
+}) {
+  const pageNumbers = getPageNumbers(currentPage, pageCount);
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-[color:var(--border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+      <p className="text-[11px] text-[color:var(--muted)] sm:text-xs">
+        Showing {visibleCount} of {totalPools} pools · Page {currentPage} of {pageCount}
+      </p>
+
+      <nav aria-label="Pool comparison pagination" className="flex flex-wrap items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className="rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-2 py-1 text-[11px] font-semibold text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--border)] disabled:hover:text-[color:var(--foreground)] sm:px-3 sm:py-1.5 sm:text-xs"
+        >
+          <span className="hidden sm:inline">Previous</span>
+          <span className="sm:hidden">←</span>
+        </button>
+
+        <div className="flex items-center gap-1">
+          {pageNumbers.map((entry, idx) => {
+            if (entry === "…") {
+              return (
+                <span key={`ellipsis-${idx}`} className="px-0.5 text-[11px] text-[color:var(--muted)] sm:px-1 sm:text-xs">
+                  …
+                </span>
+              );
+            }
+            const isActive = entry === currentPage;
+            return (
+              <button
+                key={entry}
+                type="button"
+                onClick={() => onPageChange(entry)}
+                aria-current={isActive ? "page" : undefined}
+                className={`min-w-7 rounded-md border px-2 py-1 text-[11px] font-semibold transition sm:min-w-8 sm:px-2.5 sm:py-1.5 sm:text-xs ${
+                  isActive
+                    ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent)]"
+                    : "border-[color:var(--border)] bg-[color:var(--background)] text-[color:var(--foreground)] hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+                }`}
+              >
+                {entry}
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.min(pageCount, currentPage + 1))}
+          disabled={currentPage === pageCount}
+          className="rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-2 py-1 text-[11px] font-semibold text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--border)] disabled:hover:text-[color:var(--foreground)] sm:px-3 sm:py-1.5 sm:text-xs"
+        >
+          <span className="hidden sm:inline">Next</span>
+          <span className="sm:hidden">→</span>
+        </button>
+      </nav>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Mobile card for a single pool
 // ---------------------------------------------------------------------------
@@ -193,54 +298,9 @@ export function PoolsTable({ pools, recommendedPoolAddress }: PoolsTableProps) {
           Eligible pools across supported chains
         </h2>
         {pageCount > 1 && (
-          <div className="mt-3 flex flex-col gap-3 border-t border-[color:var(--border)] pt-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-[color:var(--muted)]">
-              Showing {visiblePools.length} of {pools.length} pools · Page {currentPage} of {pageCount}
-            </p>
-
-            <nav aria-label="Pool comparison pagination" className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                disabled={currentPage === 1}
-                className="rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-3 py-1.5 text-xs font-semibold text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--border)] disabled:hover:text-[color:var(--foreground)]"
-              >
-                Previous
-              </button>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {Array.from({ length: pageCount }, (_, index) => {
-                  const pageNumber = index + 1;
-                  const isActive = pageNumber === currentPage;
-
-                  return (
-                    <button
-                      key={pageNumber}
-                      type="button"
-                      onClick={() => setCurrentPage(pageNumber)}
-                      aria-current={isActive ? "page" : undefined}
-                      className={`min-w-9 rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
-                        isActive
-                          ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent)]"
-                          : "border-[color:var(--border)] bg-[color:var(--background)] text-[color:var(--foreground)] hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
-                disabled={currentPage === pageCount}
-                className="rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-3 py-1.5 text-xs font-semibold text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--border)] disabled:hover:text-[color:var(--foreground)]"
-              >
-                Next
-              </button>
-            </nav>
-          </div>
+          <p className="mt-2 text-xs text-[color:var(--muted)]">
+            Showing {visiblePools.length} of {pools.length} pools
+          </p>
         )}
       </div>
 
@@ -344,6 +404,17 @@ export function PoolsTable({ pools, recommendedPoolAddress }: PoolsTableProps) {
           </tbody>
         </table>
       </div>
+
+      {/* ---- Bottom pagination ---- */}
+      {pageCount > 1 && (
+        <PaginationNav
+          currentPage={currentPage}
+          pageCount={pageCount}
+          onPageChange={setCurrentPage}
+          totalPools={pools.length}
+          visibleCount={visiblePools.length}
+        />
+      )}
     </section>
   );
 }
