@@ -188,21 +188,17 @@ function PoolCard({
 }) {
   return (
     <div
-      className={`rounded-xl border p-3 ${
-        isRecommended
-          ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]"
-          : "border-[color:var(--border)] bg-[color:var(--background)]"
-      }`}
+      className="rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] p-3"
     >
       {/* Header row */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-sm font-semibold text-[color:var(--foreground)]">
             {pool.pairLabel}
           </span>
           {isRecommended && (
-            <span className="rounded-md bg-[color:var(--accent-soft)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--accent)]">
-              ★
+            <span className="rounded-full border border-[color:var(--accent)] border-opacity-30 bg-[color:var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold text-[color:var(--accent)]">
+              ★ Suggested
             </span>
           )}
         </div>
@@ -355,26 +351,22 @@ export function PoolsTable({ pools, recommendedPoolAddress }: PoolsTableProps) {
                 recommendedPoolAddress !== undefined &&
                 pool.poolAddress === recommendedPoolAddress;
 
-              const rowBase = isRecommended
-                ? "border-t border-[color:var(--accent)] bg-[color:var(--accent-soft)]"
-                : "border-t border-[color:var(--border)] transition hover:bg-white/[0.02]";
-
               return (
                 <tr
                   key={`${pool.chainId}-${pool.poolAddress}`}
-                  className={rowBase}
+                  className="border-t border-[color:var(--border)] transition hover:bg-white/[0.02]"
                 >
                   <td className="px-4 py-2.5">
-                    <span className="inline-flex items-center gap-1.5">
+                    <div>
                       <span className="truncate font-semibold text-[color:var(--foreground)]">
                         {pool.pairLabel}
                       </span>
                       {isRecommended && (
-                        <span className="rounded-md bg-[color:var(--accent-soft)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--accent)]">
-                          ★
+                        <span className="mt-0.5 inline-block rounded-full border border-[color:var(--accent)] border-opacity-30 bg-[color:var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold text-[color:var(--accent)]">
+                          ★ Suggested
                         </span>
                       )}
-                    </span>
+                    </div>
                   </td>
                   <td className="truncate px-4 py-2.5 text-[color:var(--muted)]">
                     {pool.dexName}
