@@ -12,7 +12,7 @@
 // =============================================================================
 
 import { afterEach, describe, it, expect } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { PoolsTable } from "@/components/token/pools-table";
 import { clearWinnerPools } from "@/tests/fixtures/recommendation";
@@ -28,6 +28,13 @@ const APPROVED_COLUMNS = [
   "Txs",
   "24h Δ",
 ] as const;
+
+const paginatedPools = Array.from({ length: 12 }, (_, index) => ({
+  ...clearWinnerPools[index % clearWinnerPools.length]!,
+  pairLabel: `Test Pair ${index + 1}`,
+  dexName: `dex-${index + 1}`,
+  poolAddress: `0x${String(index + 1).padStart(40, "0")}`,
+}));
 
 describe("PoolsTable rendering", () => {
   it("renders exactly the approved columns as table headers", () => {
@@ -131,5 +138,27 @@ describe("PoolsTable rendering", () => {
     render(<PoolsTable pools={clearWinnerPools} />);
 
     expect(screen.queryAllByText("★")).toHaveLength(0);
+  });
+
+  it("paginates long pool lists and switches pages", () => {
+    render(<PoolsTable pools={paginatedPools} />);
+
+    expect(screen.getByText("Showing 10 of 12 pools · Page 1 of 2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Next" })).toBeEnabled();
+
+    const table = screen.getByRole("table");
+    expect(within(table).getAllByRole("row")).toHaveLength(11);
+    expect(screen.getAllByText("Test Pair 1").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("Test Pair 11")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(screen.getByText("Showing 2 of 12 pools · Page 2 of 2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Previous" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+    expect(screen.queryByText("Test Pair 1")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Test Pair 11").length).toBeGreaterThanOrEqual(1);
+    expect(within(table).getAllByRole("row")).toHaveLength(3);
   });
 });

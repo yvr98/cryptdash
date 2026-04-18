@@ -1,3 +1,5 @@
+"use client";
+
 // =============================================================================
 // TokenScope — Pools Table
 // =============================================================================
@@ -9,6 +11,8 @@
 // Mobile: card-based layout for each pool for readability.
 // =============================================================================
 
+import { useEffect, useMemo, useState } from "react";
+
 import type { PoolCandidate, KnownChainId } from "@/lib/types";
 import { getChainDef } from "@/lib/constants";
 
@@ -16,6 +20,8 @@ type PoolsTableProps = {
   pools: PoolCandidate[];
   recommendedPoolAddress?: string;
 };
+
+const POOLS_PER_PAGE = 10;
 
 function formatUsd(value: number | null): string {
   if (value === null) return "—";
@@ -149,6 +155,18 @@ function PoolCard({
 // ---------------------------------------------------------------------------
 
 export function PoolsTable({ pools, recommendedPoolAddress }: PoolsTableProps) {
+  const pageCount = Math.ceil(pools.length / POOLS_PER_PAGE);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [pools]);
+
+  const visiblePools = useMemo(() => {
+    const startIndex = (currentPage - 1) * POOLS_PER_PAGE;
+    return pools.slice(startIndex, startIndex + POOLS_PER_PAGE);
+  }, [currentPage, pools]);
+
   if (pools.length === 0) {
     return (
       <section className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 sm:rounded-2xl sm:p-5">
@@ -174,11 +192,61 @@ export function PoolsTable({ pools, recommendedPoolAddress }: PoolsTableProps) {
         <h2 className="mt-1 text-lg font-bold text-[color:var(--foreground)] sm:text-xl">
           Eligible pools across supported chains
         </h2>
+        {pageCount > 1 && (
+          <div className="mt-3 flex flex-col gap-3 border-t border-[color:var(--border)] pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-[color:var(--muted)]">
+              Showing {visiblePools.length} of {pools.length} pools · Page {currentPage} of {pageCount}
+            </p>
+
+            <nav aria-label="Pool comparison pagination" className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+                className="rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-3 py-1.5 text-xs font-semibold text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--border)] disabled:hover:text-[color:var(--foreground)]"
+              >
+                Previous
+              </button>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {Array.from({ length: pageCount }, (_, index) => {
+                  const pageNumber = index + 1;
+                  const isActive = pageNumber === currentPage;
+
+                  return (
+                    <button
+                      key={pageNumber}
+                      type="button"
+                      onClick={() => setCurrentPage(pageNumber)}
+                      aria-current={isActive ? "page" : undefined}
+                      className={`min-w-9 rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                        isActive
+                          ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent)]"
+                          : "border-[color:var(--border)] bg-[color:var(--background)] text-[color:var(--foreground)] hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
+                disabled={currentPage === pageCount}
+                className="rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-3 py-1.5 text-xs font-semibold text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--border)] disabled:hover:text-[color:var(--foreground)]"
+              >
+                Next
+              </button>
+            </nav>
+          </div>
+        )}
       </div>
 
       {/* ---- Mobile card layout (below lg) ---- */}
       <div className="mt-3 space-y-2 px-4 pb-4 sm:px-5 sm:pb-5 lg:hidden">
-        {pools.map((pool) => {
+        {visiblePools.map((pool) => {
           const isRecommended =
             recommendedPoolAddress !== undefined &&
             pool.poolAddress === recommendedPoolAddress;
@@ -222,7 +290,7 @@ export function PoolsTable({ pools, recommendedPoolAddress }: PoolsTableProps) {
             </tr>
           </thead>
           <tbody>
-            {pools.map((pool) => {
+            {visiblePools.map((pool) => {
               const isRecommended =
                 recommendedPoolAddress !== undefined &&
                 pool.poolAddress === recommendedPoolAddress;

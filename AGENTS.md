@@ -58,6 +58,9 @@ TokenScope is a focused Next.js App Router app for multi-chain token research. C
 - Do not move parsing/normalization into components or route handlers when an adapter can own it.
 - Do not claim Playwright coverage unless the relevant spec actually ran.
 - Do not leave dev servers running after verification.
+- Do not launch a new dev server if one is already serving the needed app for this task.
+- Do not launch multiple Playwright/browser automation sessions for the same task; use one session, finish the check, then close it.
+- Do not leave stale Playwright, browser, or test helper processes running after verification or on failure.
 - Do not defer all verification to the end; use static checks, narrow tests, then e2e.
 - Do not fabricate recommendations or market state when upstream data is partial or failed.
 
@@ -81,4 +84,10 @@ npm run start
 - `NEXT_PUBLIC_APP_URL` and `COINGECKO_API_KEY` are expected in `.env.local`.
 - CI runs `npm install`, `npm run test`, then `npm run build` on Node 24.
 - Playwright uses `tests/e2e` with `reuseExistingServer: true` on `127.0.0.1:3000`.
+- Process hygiene for local verification:
+  - Check for an existing app server before starting another one.
+  - Keep at most one Playwright/browser automation session open per task.
+  - Close Playwright/browser sessions immediately after the check completes.
+  - Stop any server started just for verification as soon as verification is done.
+  - If verification fails or is interrupted, clean up any server or Playwright process started for that attempt before retrying.
 - If you need deeper guidance, read `app/AGENTS.md`, `lib/AGENTS.md`, `lib/api/AGENTS.md`, `tests/AGENTS.md`, and `tests/e2e/AGENTS.md`.
