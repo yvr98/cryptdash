@@ -10,7 +10,8 @@
 // This adapter parses upstream string/number/null values exactly once.
 // =============================================================================
 
-import type { Candle, PoolCandidate, KnownChainId } from "@/lib/types";
+import type { Candle, PoolCandidate, KnownChainId, TrendingPoolRow } from "@/lib/types";
+import { SUPPORTED_CHAIN_LIST } from "@/lib/constants/chains";
 import { UpstreamError, classifyHttpStatus } from "@/lib/api/upstream-error";
 
 const COINGECKO_ONCHAIN_BASE = "https://api.coingecko.com/api/v3/onchain";
@@ -240,4 +241,110 @@ export async function fetchPoolsForToken(
   return rawPools
     .map((p) => normalizePool(p, chainId))
     .filter((p): p is PoolCandidate => p !== null);
+}
+
+// ---------------------------------------------------------------------------
+// Discovery — GeckoTerminal public trending pools
+// ---------------------------------------------------------------------------
+
+const GECKOTERMINAL_BASE = "https://api.geckoterminal.com/api/v2";
+const GT_ACCEPT = "application/json;version=20230203";
+
+/**
+ * Reverse lookup: GeckoTerminal network slug → KnownChainId.
+ * Built from SUPPORTED_CHAIN_LIST at module load so the adapter stays
+ * in sync with the canonical chain definitions.
+ */
+const networkToChainId = new Map<string, KnownChainId>(
+  SUPPORTED_CHAIN_LIST.map((c) => [c.geckoTerminalNetwork, c.chainId])
+);
+
+/** Raw pool attributes from GeckoTerminal trending-pools response. */
+interface RawTrendingPoolAttributes {
+  address?: string;
+  name?: string;
+  reserve_in_usd?: string | number | null;
+  volume_usd?: { h24?: string | number | null };
+  transactions?: { h24?: string | number | TxCountObject | null };
+  /** @deprecated Use transactions.h24 for current API shape */
+  transaction_count?: { h24?: string | number | null };
+  pool_created_at?: string | null;
+}
+
+/** Raw pool entry from GeckoTerminal trending-pools JSON:API response. */
+interface RawTrendingPool {
+  id?: string;
+  type?: string;
+  attributes?: RawTrendingPoolAttributes;
+  relationships?: {
+    network?: { data?: { id?: string } };
+    dex?: { data?: { id?: string } };
+  };
+}
+
+/** Raw GeckoTerminal trending-pools list response. */
+interface TrendingPoolsResponse {
+  data?: RawTrendingPool[];
+}
+
+/**
+ * Normalize a single raw trending pool into a TrendingPoolRow.
+ * Returns null if the pool lacks required identity fields
+ * (address, name, dex id, network id).
+ */
+export function normalizeTrendingPool(
+  raw: RawTrendingPool
+): TrendingPoolRow | null {
+  const attrs = raw?.attributes;
+  if (!attrs?.address || !attrs?.name) return null;
+
+  const networkId = raw?.relationships?.network?.data?.id;
+  if (!networkId) return null;
+
+  const dexId =
+    raw?.relationships?.dex?.data?.id;
+  if (!dexId) return null;
+
+  const chainId = networkToChainId.get(networkId) ?? null;
+
+  return {
+    poolAddress: attrs.address,
+    pairLabel: attrs.name,
+    networkId,
+    chainId,
+    dexName: dexId,
+    liquidityUsd: parseNum(attrs.reserve_in_usd),
+    volume24hUsd: parseNum(attrs.volume_usd?.h24),
+    transactions24h: parseTxCount(attrs.transactions?.h24 ?? attrs.transaction_count?.h24),
+    poolCreatedAt: attrs.pool_created_at || null,
+  };
+}
+
+/**
+ * Fetch trending pools from GeckoTerminal's public API.
+ * Returns normalized TrendingPoolRow[] in exact upstream order.
+ */
+export async function fetchTrendingPools(page: number = 1): Promise<TrendingPoolRow[]> {
+  const params = new URLSearchParams({
+    duration: "24h",
+    page: String(page),
+    include: "base_token,quote_token,dex,network",
+    include_gt_community_data: "false",
+  });
+
+  const url = `${GECKOTERMINAL_BASE}/networks/trending_pools?${params}`;
+  const res = await fetch(url, {
+    headers: { Accept: GT_ACCEPT },
+  });
+
+  if (!res.ok) {
+    throw new UpstreamError(classifyHttpStatus(res.status), res.status, "geckoterminal");
+  }
+
+  const data: TrendingPoolsResponse = await res.json();
+  const rawPools = data?.data ?? [];
+
+  return rawPools
+    .map((p) => normalizeTrendingPool(p))
+    .filter((p): p is TrendingPoolRow => p !== null);
 }
