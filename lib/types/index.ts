@@ -132,6 +132,31 @@ export interface PoolCandidate {
   priceChange24h?: number | null;
 }
 
+/**
+ * A single trending pool row from GeckoTerminal's public trending-pools endpoint.
+ * Lighter than PoolCandidate — carries enough for discovery display and
+ * supported-chain filtering without recommendation scoring.
+ * All numeric fields are parsed from upstream strings at the adapter boundary.
+ */
+export interface TrendingPoolRow {
+  poolAddress: string;
+  /** Human-readable pair label (e.g. "WETH / USDC"). */
+  pairLabel: string;
+  /** GeckoTerminal network identifier (e.g. "eth", "base"). */
+  networkId: string;
+  /** Numeric chain ID resolved from SUPPORTED_CHAINS, or null for unsupported chains. */
+  chainId: KnownChainId | null;
+  dexName: string;
+  /** Pool liquidity in USD. */
+  liquidityUsd: number | null;
+  /** 24-hour trading volume in USD. */
+  volume24hUsd: number | null;
+  /** 24-hour transaction count (buys + sells). */
+  transactions24h: number | null;
+  /** ISO 8601 timestamp when the pool was created, or null. */
+  poolCreatedAt: string | null;
+}
+
 /** Confidence labels for the recommendation card. */
 export type Confidence = "high" | "medium" | "low";
 

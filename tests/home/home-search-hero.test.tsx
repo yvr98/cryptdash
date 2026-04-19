@@ -131,4 +131,20 @@ describe("HomeSearchHero", () => {
 
     expect(screen.getByText(/no matching token found/i)).toBeInTheDocument();
   });
+
+  it("renders the search-first hero without a discovery CTA", () => {
+    render(<HomeSearchHero />);
+
+    // Core search-first elements are present
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Research a token.");
+    expect(screen.getByPlaceholderText(/search by name/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^search$/i })).toBeEnabled();
+    expect(screen.getByRole("link", { name: /try eth/i })).toHaveAttribute("href", "/token/ethereum");
+
+    // No discovery CTA link or button is rendered
+    expect(screen.queryByRole("link", { name: /discover/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /discover/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/explore tokens/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/browse/i)).not.toBeInTheDocument();
+  });
 });
