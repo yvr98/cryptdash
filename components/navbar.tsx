@@ -34,6 +34,8 @@ export function Navbar() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const isHome = pathname === "/";
+  const discoverLinkClassName =
+    "inline-flex h-9 items-center rounded-lg border border-[color:var(--border)] px-3 text-sm font-medium text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]";
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -145,13 +147,121 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop search bar — hidden on home page and on very small screens */}
-        {!isHome && (
-          <div className="relative hidden sm:block" ref={dropdownRef}>
-            <div className="relative">
-              {/* Search icon */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link href="/discover" className={discoverLinkClassName}>
+            Discover
+          </Link>
+
+          {/* Desktop search bar — hidden on home page and on very small screens */}
+          {!isHome && (
+            <div className="relative hidden sm:block" ref={dropdownRef}>
+              <div className="relative">
+                {/* Search icon */}
+                <svg
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                  />
+                </svg>
+                <input
+                  ref={inputRef}
+                  type="search"
+                  value={query}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => {
+                    if (results.length > 0) setIsOpen(true);
+                  }}
+                  placeholder="Search tokens..."
+                  autoComplete="off"
+                  className="h-9 w-56 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] pl-9 pr-3 text-sm text-[color:var(--foreground)] outline-none transition-all placeholder:text-[color:var(--muted)] focus:w-72 focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent-soft)] lg:w-64 lg:focus:w-80"
+                />
+              </div>
+
+              {/* Dropdown results */}
+              {isOpen && (
+                <div className="absolute right-0 top-full mt-1.5 w-80 overflow-hidden rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-strong)] shadow-lg shadow-black/30">
+                  {isLoading ? (
+                    <div className="px-4 py-3 text-sm text-[color:var(--muted)]">
+                      Searching…
+                    </div>
+                  ) : results.length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-[color:var(--muted)]">
+                      No results found
+                    </div>
+                  ) : (
+                    <ul>
+                      {results.map((result) => (
+                        <li key={result.coinId}>
+                          <button
+                            type="button"
+                            onClick={() => handleSelect(result.coinId)}
+                            className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-white/[0.04]"
+                          >
+                            {result.thumbUrl ? (
+                              <img
+                                src={result.thumbUrl}
+                                alt=""
+                                width={24}
+                                height={24}
+                                className="h-6 w-6 rounded-full"
+                              />
+                            ) : (
+                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[10px] font-bold text-[color:var(--accent)]">
+                                {result.symbol.toUpperCase().slice(0, 2)}
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="truncate text-sm font-semibold text-[color:var(--foreground)]">
+                                  {result.name}
+                                </span>
+                                <span className="shrink-0 text-xs text-[color:var(--muted)]">
+                                  {result.symbol.toUpperCase()}
+                                </span>
+                                {result.marketCapRank && (
+                                  <span className="shrink-0 rounded bg-[color:var(--surface)] px-1 py-0.5 text-[10px] text-[color:var(--muted)]">
+                                    #{result.marketCapRank}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Mobile search toggle — hidden on home page */}
+          {!isHome && (
+            <button
+              type="button"
+              onClick={() => {
+                setMobileSearchOpen(!mobileSearchOpen);
+                // Focus input after opening
+                setTimeout(() => {
+                  const mobileInput = document.getElementById(
+                    "navbar-mobile-search"
+                  );
+                  mobileInput?.focus();
+                }, 100);
+              }}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--border)] text-[color:var(--muted)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] sm:hidden"
+              aria-label="Toggle search"
+            >
               <svg
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]"
+                className="h-4 w-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -163,111 +273,9 @@ export function Navbar() {
                   d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
                 />
               </svg>
-              <input
-                ref={inputRef}
-                type="search"
-                value={query}
-                onChange={(e) => handleInputChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onFocus={() => {
-                  if (results.length > 0) setIsOpen(true);
-                }}
-                placeholder="Search tokens..."
-                autoComplete="off"
-                className="h-9 w-56 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] pl-9 pr-3 text-sm text-[color:var(--foreground)] outline-none transition-all placeholder:text-[color:var(--muted)] focus:w-72 focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent-soft)] lg:w-64 lg:focus:w-80"
-              />
-            </div>
-
-            {/* Dropdown results */}
-            {isOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-80 overflow-hidden rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-strong)] shadow-lg shadow-black/30">
-                {isLoading ? (
-                  <div className="px-4 py-3 text-sm text-[color:var(--muted)]">
-                    Searching…
-                  </div>
-                ) : results.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-[color:var(--muted)]">
-                    No results found
-                  </div>
-                ) : (
-                  <ul>
-                    {results.map((result) => (
-                      <li key={result.coinId}>
-                        <button
-                          type="button"
-                          onClick={() => handleSelect(result.coinId)}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-white/[0.04]"
-                        >
-                          {result.thumbUrl ? (
-                            <img
-                              src={result.thumbUrl}
-                              alt=""
-                              width={24}
-                              height={24}
-                              className="h-6 w-6 rounded-full"
-                            />
-                          ) : (
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[10px] font-bold text-[color:var(--accent)]">
-                              {result.symbol.toUpperCase().slice(0, 2)}
-                            </div>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="truncate text-sm font-semibold text-[color:var(--foreground)]">
-                                {result.name}
-                              </span>
-                              <span className="shrink-0 text-xs text-[color:var(--muted)]">
-                                {result.symbol.toUpperCase()}
-                              </span>
-                              {result.marketCapRank && (
-                                <span className="shrink-0 rounded bg-[color:var(--surface)] px-1 py-0.5 text-[10px] text-[color:var(--muted)]">
-                                  #{result.marketCapRank}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Mobile search toggle — hidden on home page */}
-        {!isHome && (
-          <button
-            type="button"
-            onClick={() => {
-              setMobileSearchOpen(!mobileSearchOpen);
-              // Focus input after opening
-              setTimeout(() => {
-                const mobileInput = document.getElementById(
-                  "navbar-mobile-search"
-                );
-                mobileInput?.focus();
-              }, 100);
-            }}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--border)] text-[color:var(--muted)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] sm:hidden"
-            aria-label="Toggle search"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-              />
-            </svg>
-          </button>
-        )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Mobile search expanded panel */}
