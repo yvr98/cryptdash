@@ -68,8 +68,20 @@ const BASE_MODEL: DiscoveryPageModel = {
 };
 
 describe("DiscoveryPageShell", () => {
-  it("renders the public heading, upstream-ranked subtitle, approved columns, and row content", () => {
-    render(<DiscoveryPageShell data={{ ...BASE_MODEL, dataState: COMPLETE_DATA_STATE }} />);
+  it("renders the canonical copy heading and description, approved columns, and row content", () => {
+    render(
+      <DiscoveryPageShell
+        data={{
+          ...BASE_MODEL,
+          dataState: COMPLETE_DATA_STATE,
+          copy: {
+            title: "Explore trending pools across supported chains",
+            description:
+              "Discovery order is upstream-ranked. TokenScope keeps the original feed order, filters it to supported chains, and shows the latest available liquidity, volume, activity, and freshness signals.",
+          },
+        }}
+      />
+    );
 
     expect(
       screen.getByRole("heading", {
@@ -95,7 +107,7 @@ describe("DiscoveryPageShell", () => {
     expect(screen.getAllByText("1,240").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders honest empty-state copy from emptyState metadata when rows are empty", () => {
+  it("renders canonical empty-state copy from data.copy when rows are empty", () => {
     render(
       <DiscoveryPageShell
         data={{
@@ -107,6 +119,11 @@ describe("DiscoveryPageShell", () => {
             hadUnsupportedRows: true,
           },
           dataState: COMPLETE_DATA_STATE,
+          copy: {
+            title: "No supported-chain pools in this snapshot",
+            description:
+              "Upstream discovery returned pools, but none mapped to TokenScope's supported chains.",
+          },
         }}
       />
     );
@@ -124,7 +141,17 @@ describe("DiscoveryPageShell", () => {
 
   it("renders the degraded banner only when dataState.status is upstream_error", () => {
     const { rerender } = render(
-      <DiscoveryPageShell data={{ ...BASE_MODEL, dataState: COMPLETE_DATA_STATE }} />
+      <DiscoveryPageShell
+        data={{
+          ...BASE_MODEL,
+          dataState: COMPLETE_DATA_STATE,
+          copy: {
+            title: "Explore trending pools across supported chains",
+            description:
+              "Discovery order is upstream-ranked. TokenScope keeps the original feed order, filters it to supported chains, and shows the latest available liquidity, volume, activity, and freshness signals.",
+          },
+        }}
+      />
     );
 
     expect(
@@ -132,7 +159,17 @@ describe("DiscoveryPageShell", () => {
     ).not.toBeInTheDocument();
 
     rerender(
-      <DiscoveryPageShell data={{ ...BASE_MODEL, dataState: UPSTREAM_ERROR_STATE }} />
+      <DiscoveryPageShell
+        data={{
+          ...BASE_MODEL,
+          dataState: UPSTREAM_ERROR_STATE,
+          copy: {
+            title: "Discovery data partially unavailable",
+            description:
+              "Some upstream discovery results could not be loaded. Showing available data only. Try refreshing in a moment.",
+          },
+        }}
+      />
     );
 
     expect(

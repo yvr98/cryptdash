@@ -265,6 +265,7 @@ export function shapeDiscoveryRows(
 
 import { fetchTrendingPools } from "@/lib/api/geckoterminal";
 import {
+  UpstreamError,
   isUpstreamError,
   type UpstreamErrorCategory,
 } from "@/lib/api/upstream-error";
@@ -350,7 +351,7 @@ function computeExplanatoryCopy(
   };
 }
 
-type TrendingPoolFetcher = (page: number) => Promise<TrendingPoolRow[]>;
+export type TrendingPoolFetcher = (page: number) => Promise<TrendingPoolRow[]>;
 
 /**
  * Build the complete page model for the discovery page.
@@ -364,16 +365,17 @@ type TrendingPoolFetcher = (page: number) => Promise<TrendingPoolRow[]>;
  * @param referenceNow - Reference timestamp for freshness bucketing (default: Date.now())
  */
 export async function getDiscoveryPageData(
-  fetcher: TrendingPoolFetcher = fetchTrendingPools,
+  fetcher?: TrendingPoolFetcher,
   referenceNow?: number
 ): Promise<DiscoveryPageData> {
+  const actualFetcher = fetcher ?? fetchTrendingPools;
   const upstreamErrors: UpstreamErrorInfo[] = [];
   let dataStatus: "complete" | "upstream_error" = "complete";
   const pages: TrendingPoolRow[][] = [];
 
   for (let page = 1; page <= MAX_DISCOVERY_PAGES; page++) {
     try {
-      const rows = await fetcher(page);
+      const rows = await actualFetcher(page);
       pages.push(rows);
 
       // Check if we already have enough rows from shaping
@@ -398,4 +400,111 @@ export async function getDiscoveryPageData(
     },
     copy: computeExplanatoryCopy(shaped, dataStatus),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Deterministic e2e fixture fetchers
+// ---------------------------------------------------------------------------
+
+
+/**
+ * Return a deterministic fixture fetcher by name, or undefined.
+ * Used by app/discover/page.tsx via ?fixture= query param for e2e testing.
+ *
+ * - "happy":     3 supported-chain rows across Ethereum, Base, Arbitrum
+ * - "empty":     rows with only unsupported chains (null chainId)
+ * - "degraded":  1 supported row on page 1, then throws UpstreamError on page 2
+ */
+export function getFixtureFetcher(
+  name: string
+): TrendingPoolFetcher | undefined {
+  switch (name) {
+    case "happy":
+      return happyFixtureFetcher;
+    case "empty":
+      return emptyFixtureFetcher;
+    case "degraded":
+      return degradedFixtureFetcher;
+    default:
+      return undefined;
+  }
+}
+
+function happyFixtureFetcher(page: number): Promise<TrendingPoolRow[]> {
+  if (page > 1) return Promise.resolve([]);
+  const now = Date.now();
+  return Promise.resolve([
+    {
+      poolAddress: "0xaaa0001000000000000000000000000000000001",
+      pairLabel: "WETH / USDC",
+      networkId: "eth",
+      chainId: 1 as const,
+      dexName: "Uniswap V3",
+      liquidityUsd: 12_500_000,
+      volume24hUsd: 3_400_000,
+      transactions24h: 1234,
+      poolCreatedAt: new Date(now - 30 * MS_PER_DAY).toISOString(),
+    },
+    {
+      poolAddress: "0xaaa0002000000000000000000000000000000002",
+      pairLabel: "WETH / USDC",
+      networkId: "base",
+      chainId: 8453 as const,
+      dexName: "Aerodrome",
+      liquidityUsd: 8_200_000,
+      volume24hUsd: 2_100_000,
+      transactions24h: 876,
+      poolCreatedAt: new Date(now - 3 * MS_PER_DAY).toISOString(),
+    },
+    {
+      poolAddress: "0xaaa0003000000000000000000000000000000003",
+      pairLabel: "ARB / WETH",
+      networkId: "arbitrum",
+      chainId: 42161 as const,
+      dexName: "Camelot",
+      liquidityUsd: 5_100_000,
+      volume24hUsd: 1_300_000,
+      transactions24h: 542,
+      poolCreatedAt: new Date(now - MS_PER_HOUR).toISOString(),
+    },
+  ]);
+}
+
+function emptyFixtureFetcher(page: number): Promise<TrendingPoolRow[]> {
+  if (page > 1) return Promise.resolve([]);
+  return Promise.resolve([
+    {
+      poolAddress: "0xbbb0001000000000000000000000000000000001",
+      pairLabel: "SOL / USDC",
+      networkId: "solana",
+      chainId: null,
+      dexName: "Raydium",
+      liquidityUsd: 50_000_000,
+      volume24hUsd: 10_000_000,
+      transactions24h: 5000,
+      poolCreatedAt: new Date(Date.now() - 30 * MS_PER_DAY).toISOString(),
+    },
+  ]);
+}
+
+function degradedFixtureFetcher(page: number): Promise<TrendingPoolRow[]> {
+  if (page === 1) {
+    const now = Date.now();
+    return Promise.resolve([
+      {
+        poolAddress: "0xccc0001000000000000000000000000000000001",
+        pairLabel: "WETH / USDC",
+        networkId: "eth",
+        chainId: 1 as const,
+        dexName: "Uniswap V3",
+        liquidityUsd: 12_500_000,
+        volume24hUsd: 3_400_000,
+        transactions24h: 1234,
+        poolCreatedAt: new Date(now - 30 * MS_PER_DAY).toISOString(),
+      },
+    ]);
+  }
+  return Promise.reject(
+    new UpstreamError("rate_limited", 429, "geckoterminal")
+  );
 }
