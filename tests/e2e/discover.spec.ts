@@ -28,7 +28,7 @@ test.describe("Discovery page — real route", () => {
     });
 
     // Page header shows canonical copy
-    await expect(page.getByText("Discover", { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText('Discover', { exact: true })).toBeVisible();
     await expect(
       page.getByRole("heading", {
         level: 1,
@@ -181,6 +181,31 @@ test.describe("Discovery page — real route", () => {
         table.getByRole("columnheader", { name: col })
       ).toBeVisible();
     }
+  });
+
+
+  // -----------------------------------------------------------------------
+  // Real navigation proof: homepage → navbar Discover link → /discover
+  // -----------------------------------------------------------------------
+
+  test("navigating from homepage via navbar Discover link lands on /discover with visible marker", async ({
+    page,
+  }) => {
+    // Start on the homepage
+    await page.goto("http://127.0.0.1:3000/", { waitUntil: "networkidle" });
+
+    // Click the shared navbar Discover link
+    const discoverLink = page.getByRole("link", { name: "Discover" });
+    await expect(discoverLink).toBeVisible();
+    await discoverLink.click();
+
+    // Assert navigation to /discover
+    await page.waitForURL("**/discover", { timeout: 10000 });
+    await expect(page).toHaveURL("http://127.0.0.1:3000/discover");
+
+    // Assert the stable discovery page marker is visible
+    // The shell always renders the "Discover" label unconditionally
+    await expect(page.getByRole('main').getByText('Discover', { exact: true })).toBeVisible();
   });
 
   // -------------------------------------------------------------------------
