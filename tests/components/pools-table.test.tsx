@@ -130,33 +130,32 @@ describe("PoolsTable rendering", () => {
       />
     );
 
-    // ★ appears in both mobile card and desktop table row
-    expect(screen.getAllByText("★").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("★ Suggested").length).toBeGreaterThanOrEqual(1);
   });
 
   it("does not show star badge when no pool is recommended", () => {
     render(<PoolsTable pools={clearWinnerPools} />);
 
-    expect(screen.queryAllByText("★")).toHaveLength(0);
+    expect(screen.queryAllByText("★ Suggested")).toHaveLength(0);
   });
 
   it("paginates long pool lists and switches pages", () => {
     render(<PoolsTable pools={paginatedPools} />);
 
     expect(screen.getByText("Showing 10 of 12 pools · Page 1 of 2")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Next" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Previous/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Next/ })).toBeEnabled();
 
     const table = screen.getByRole("table");
     expect(within(table).getAllByRole("row")).toHaveLength(11);
     expect(screen.getAllByText("Test Pair 1").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("Test Pair 11")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: /Next/ }));
 
     expect(screen.getByText("Showing 2 of 12 pools · Page 2 of 2")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Previous" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Previous/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Next/ })).toBeDisabled();
     expect(screen.queryByText("Test Pair 1")).not.toBeInTheDocument();
     expect(screen.getAllByText("Test Pair 11").length).toBeGreaterThanOrEqual(1);
     expect(within(table).getAllByRole("row")).toHaveLength(3);
