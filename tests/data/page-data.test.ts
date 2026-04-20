@@ -10,6 +10,8 @@ import { describe, expect, it } from "vitest";
 
 import { getTokenDetailPageData } from "@/lib/page-data/token-detail";
 
+import { buildTokenMetadata } from "@/lib/page-data/metadata";
+
 function createCoinDetailFixture(
   platforms: Record<string, string>,
   coinId: string = "test-token"
@@ -129,5 +131,74 @@ describe("getTokenDetailPageData", () => {
         href: "https://www.coingecko.com/en/coins/test-token",
       },
     ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Token route metadata contract
+// ---------------------------------------------------------------------------
+
+describe("buildTokenMetadata", () => {
+  it("produces bounded metadata with title, description, openGraph, twitter, and canonical", () => {
+    const meta = buildTokenMetadata({
+      coinId: "ethereum",
+      name: "Ethereum",
+      symbol: "eth",
+    });
+
+    expect(meta.title).toBe("Ethereum (ETH) — TokenScope");
+    expect(meta.description).toContain("Ethereum");
+    expect(meta.openGraph?.title).toBe(meta.title);
+    expect(meta.openGraph?.description).toBe(meta.description);
+    expect((meta.twitter as { card: string }).card).toBe("summary");
+    expect(meta.alternates?.canonical).toContain("/token/ethereum");
+  });
+
+  it("falls back to coinId when name matches coinId", () => {
+    const meta = buildTokenMetadata({
+      coinId: "wrapped-bitcoin",
+      name: "wrapped-bitcoin",
+      symbol: "wbtc",
+    });
+
+    expect(meta.title).toContain("wrapped-bitcoin");
+    expect(meta.title).toContain("WBTC");
+    expect(meta.alternates?.canonical).toContain("/token/wrapped-bitcoin");
+  });
+
+  it("omits symbol suffix when symbol is empty", () => {
+    const meta = buildTokenMetadata({
+      coinId: "test-token",
+      name: "Test Token",
+      symbol: "",
+    });
+
+    expect(meta.title).toBe("Test Token — TokenScope");
+    expect(meta.title).not.toContain("()");
+  });
+
+  it("canonical URL never includes query params", () => {
+    const meta = buildTokenMetadata({
+      coinId: "ethereum",
+      name: "Ethereum",
+      symbol: "eth",
+    });
+
+    const canonical = meta.alternates?.canonical as string;
+    expect(canonical).not.toContain("?");
+    expect(canonical).toMatch(/\/token\/ethereum$/);
+  });
+
+  it("metadata keys are bounded to the contract: title/description/og/twitter/canonical only", () => {
+    const meta = buildTokenMetadata({
+      coinId: "ethereum",
+      name: "Ethereum",
+      symbol: "eth",
+    });
+
+    const topKeys = Object.keys(meta).filter((k) => k !== "openGraph" && k !== "twitter" && k !== "alternates");
+    expect(topKeys).toEqual(["title", "description"]);
+    expect(Object.keys(meta.openGraph as object)).toEqual(["title", "description"]);
+    expect(Object.keys(meta.twitter as object)).toEqual(["card"]);
   });
 });
