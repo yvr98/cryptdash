@@ -1,32 +1,49 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
 import { TokenDetailShell } from "@/components/token/token-detail-shell";
-import {
-  getTokenDetailPageData,
-  getTokenDetailFixtureFetchers,
-} from "@/lib/page-data/token-detail";
+import { getTokenDetailPageData } from "@/lib/page-data/token-detail";
 import { isUpstreamError } from "@/lib/api/upstream-error";
+import { buildTokenMetadata } from "@/lib/page-data/metadata";
 
 type TokenDetailPageProps = {
   params: Promise<{
     coinId: string;
   }>;
-  searchParams: Promise<{
-    fixture?: string;
-  }>;
 };
 
-async function loadTokenDetailPageData(coinId: string, fixture?: string) {
-  try {
-    const fixtureFetchers = fixture
-      ? getTokenDetailFixtureFetchers(fixture)
-      : undefined;
+export async function generateMetadata({
+  params,
+}: TokenDetailPageProps): Promise<Metadata> {
+  const { coinId } = await params;
 
-    return await getTokenDetailPageData(
+  try {
+    const data = await loadTokenDetailPageData(coinId);
+
+    return buildTokenMetadata({
       coinId,
-      fixtureFetchers?.fetchCoinDetail,
-      fixtureFetchers?.fetchPools
-    );
+      name: data.token.name,
+      symbol: data.token.symbol,
+    });
+  } catch (error) {
+    // notFound() throws with digest NEXT_NOT_FOUND — must propagate
+    // so Next.js renders the 404 page for true not-found cases
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "digest" in error &&
+      (error as { digest: unknown }).digest === "NEXT_NOT_FOUND"
+    ) {
+      throw error;
+    }
+
+    // Unexpected errors: safe fallback metadata rather than crashing
+    return buildTokenMetadata({ coinId, name: coinId, symbol: "" });
+  }
+}
+
+async function loadTokenDetailPageData(coinId: string) {
+  try {
+    return await getTokenDetailPageData(coinId);
   } catch (error) {
     if (isUpstreamError(error) && error.category === "not_found") {
       notFound();
@@ -38,11 +55,9 @@ async function loadTokenDetailPageData(coinId: string, fixture?: string) {
 
 export default async function TokenDetailPage({
   params,
-  searchParams,
 }: TokenDetailPageProps) {
   const { coinId } = await params;
-  const resolvedSearchParams = await searchParams;
-  const data = await loadTokenDetailPageData(coinId, resolvedSearchParams?.fixture);
+  const data = await loadTokenDetailPageData(coinId);
 
   return (
     <main className="flex flex-1">

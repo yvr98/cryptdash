@@ -17,6 +17,7 @@ import { PoolsTable } from "@/components/token/pools-table";
 import { RecommendationCard } from "@/components/token/recommendation-card";
 import { WatchlistButton } from "@/components/token/watchlist-button";
 import { WatchlistPanel } from "@/components/token/watchlist-panel";
+import { ContractCopyButton } from "@/components/token/contract-copy-button";
 
 type TokenDetailShellProps = {
   data: TokenDetailPageData;
@@ -273,9 +274,12 @@ export function TokenDetailShell({ data }: TokenDetailShellProps) {
                       <p className="mt-2 break-all font-mono text-xs text-[color:var(--muted)]">
                         {chain.contractAddress}
                       </p>
-                      <p className="mt-1 text-[10px] uppercase tracking-wider text-[color:var(--muted)]">
-                        {previewAddress(chain.contractAddress!)}
-                      </p>
+                      <div className="mt-1 flex items-center justify-between gap-2">
+                        <p className="text-[10px] uppercase tracking-wider text-[color:var(--muted)]">
+                          {previewAddress(chain.contractAddress!)}
+                        </p>
+                        <ContractCopyButton address={chain.contractAddress!} />
+                      </div>
                     </div>
                   ))}
               </div>
