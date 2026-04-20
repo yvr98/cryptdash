@@ -10,7 +10,7 @@
 // This adapter parses upstream string/number/null values exactly once.
 // =============================================================================
 
-import type { Candle, PoolCandidate, KnownChainId, TrendingPoolRow } from "@/lib/types";
+import type { Candle, PoolCandidate, KnownChainId, PoolRecord, TrendingPoolRow } from "@/lib/types";
 import { SUPPORTED_CHAIN_LIST } from "@/lib/constants/chains";
 import { UpstreamError, classifyHttpStatus } from "@/lib/api/upstream-error";
 
@@ -168,6 +168,7 @@ interface RawPoolAttributes {
   transaction_count?: { h24?: string | number | null };
   transactions?: { h24?: string | number | TxCountObject | null };
   price_change_percentage?: { h24?: string | number | null };
+  pool_created_at?: string | null;
 }
 
 /** Raw pool entry from CoinGecko onchain JSON:API response. */
@@ -241,6 +242,79 @@ export async function fetchPoolsForToken(
   return rawPools
     .map((p) => normalizePool(p, chainId))
     .filter((p): p is PoolCandidate => p !== null);
+}
+
+// ---------------------------------------------------------------------------
+// Single pool — CoinGecko onchain pool detail endpoint
+// ---------------------------------------------------------------------------
+
+/** Raw single-pool response from CoinGecko onchain. */
+interface SinglePoolResponse {
+  data?: RawPool;
+}
+
+/**
+ * Normalize a single raw upstream pool into a PoolRecord for pool detail views.
+ * Returns null if the pool lacks required identity fields (address, name, dex_id).
+ * All numeric-string/null fields are parsed via parseNum.
+ */
+export function normalizePoolRecord(
+  raw: RawPool,
+  networkId: string,
+): PoolRecord | null {
+  const attrs = raw?.attributes;
+  if (!attrs?.address || !attrs?.name) return null;
+
+  const dexId =
+    raw?.relationships?.dex?.data?.id || attrs.dex_id;
+  if (!dexId) return null;
+
+  const chainId = networkToChainId.get(networkId) ?? null;
+
+  return {
+    poolAddress: attrs.address,
+    networkId,
+    chainId,
+    dexName: dexId,
+    pairLabel: attrs.name,
+    baseTokenPriceUsd: parseNum(attrs.base_token_price_usd),
+    quoteTokenPriceUsd: parseNum(attrs.quote_token_price_usd),
+    liquidityUsd: parseNum(attrs.reserve_in_usd),
+    volume24hUsd: parseNum(attrs.volume_usd?.h24),
+    transactions24h: parseTxCount(attrs.transactions?.h24 ?? attrs.transaction_count?.h24),
+    priceChange24h: parseNum(attrs.price_change_percentage?.h24),
+    poolCreatedAt: attrs.pool_created_at || null,
+  };
+}
+
+/**
+ * Fetch a single pool record by network and address from CoinGecko's onchain API.
+ * Returns a normalized PoolRecord — all string parsing done at boundary.
+ * Throws UpstreamError("not_found") when the pool does not exist.
+ */
+export async function fetchPoolRecord(
+  network: string,
+  poolAddress: string,
+): Promise<PoolRecord> {
+  const url = `${COINGECKO_ONCHAIN_BASE}/networks/${network}/pools/${encodeURIComponent(poolAddress)}`;
+  const res = await fetch(url, { headers: buildHeaders() });
+
+  if (!res.ok) {
+    throw new UpstreamError(classifyHttpStatus(res.status), res.status, "geckoterminal");
+  }
+
+  const data: SinglePoolResponse = await res.json();
+  const rawPool = data?.data;
+  if (!rawPool) {
+    throw new UpstreamError("not_found", 404, "geckoterminal");
+  }
+
+  const record = normalizePoolRecord(rawPool, network);
+  if (!record) {
+    throw new UpstreamError("not_found", 404, "geckoterminal");
+  }
+
+  return record;
 }
 
 // ---------------------------------------------------------------------------
