@@ -334,3 +334,87 @@ export async function getTokenDetailPageData(
     },
   };
 }
+
+// ---------------------------------------------------------------------------
+// Deterministic e2e fixture fetchers
+// ---------------------------------------------------------------------------
+
+export interface TokenDetailFixtureFetchers {
+  fetchCoinDetail: CoinDetailFetcher;
+  fetchPools: PoolFetcher;
+}
+
+/**
+ * Return deterministic token-detail fixture fetchers by name, or undefined.
+ * Used by app/token/[coinId]/page.tsx via ?fixture= query param for e2e testing.
+ *
+ * - "pool-link": minimal ethereum token detail fixture with one eligible pool
+ *                so Playwright can deterministically prove token → pool navigation.
+ */
+export function getTokenDetailFixtureFetchers(
+  name: string
+): TokenDetailFixtureFetchers | undefined {
+  switch (name) {
+    case "pool-link":
+      return {
+        fetchCoinDetail: tokenPoolLinkCoinDetailFixtureFetcher,
+        fetchPools: tokenPoolLinkPoolFixtureFetcher,
+      };
+    default:
+      return undefined;
+  }
+}
+
+async function tokenPoolLinkCoinDetailFixtureFetcher(
+  coinId: string
+): Promise<TokenDetail> {
+  return {
+    token: {
+      coinId,
+      name: "Ethereum",
+      symbol: "eth",
+      marketCapRank: 1,
+      marketData: {
+        currentPriceUsd: 3_000,
+        priceChange24hPercent: 2.5,
+        marketCap: 360_000_000_000,
+        totalVolume24h: 18_000_000_000,
+        circulatingSupply: 120_000_000,
+        fullyDilutedValuation: 360_000_000_000,
+      },
+    },
+    platforms: {
+      ethereum: "0xC02aaA39b223FE8D0A0E5C4F27eAD9083C756Cc2",
+    },
+  };
+}
+
+async function tokenPoolLinkPoolFixtureFetcher(
+  network: string,
+  chainId: SupportedChainId,
+  contractAddress: string
+): Promise<PoolCandidate[]> {
+  if (
+    network !== "eth" ||
+    chainId !== 1 ||
+    contractAddress.toLowerCase() !==
+      "0xc02aaA39b223FE8D0A0E5C4F27eAD9083C756Cc2".toLowerCase()
+  ) {
+    return [];
+  }
+
+  return [
+    {
+      poolAddress: "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640",
+      chainId: 1,
+      dexName: "Uniswap V3",
+      pairLabel: "WETH / USDC",
+      baseTokenPriceUsd: 3_000,
+      quoteTokenPriceUsd: 1,
+      liquidityUsd: 12_500_000,
+      volume24hUsd: 3_400_000,
+      transactions24h: 1_234,
+      priceChange24h: 2.1,
+    },
+  ];
+}

@@ -157,6 +157,44 @@ export interface TrendingPoolRow {
   poolCreatedAt: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Pool Detail
+// ---------------------------------------------------------------------------
+
+/**
+ * A fully normalized pool record for pool detail views.
+ * Carries canonical identity (networkId + poolAddress), all market signals,
+ * and creation timestamp for freshness bucketing.
+ *
+ * chainId is null for pools on unsupported networks.
+ */
+export interface PoolRecord {
+  /** On-chain pool address — unique within a GeckoTerminal network. */
+  poolAddress: string;
+  /** GeckoTerminal network identifier (e.g. "eth", "base"). */
+  networkId: string;
+  /** Numeric chain ID resolved from SUPPORTED_CHAINS, or null for unsupported. */
+  chainId: KnownChainId | null;
+  /** DEX name from GeckoTerminal. */
+  dexName: string;
+  /** Human-readable pair label (e.g. "WETH / USDC"). */
+  pairLabel: string;
+  /** Base token price in USD, if available. */
+  baseTokenPriceUsd: number | null;
+  /** Quote token price in USD, if available. */
+  quoteTokenPriceUsd: number | null;
+  /** Pool liquidity in USD. */
+  liquidityUsd: number | null;
+  /** 24-hour trading volume in USD. */
+  volume24hUsd: number | null;
+  /** 24-hour transaction count (buys + sells). */
+  transactions24h: number | null;
+  /** 24-hour price change percentage, if available. */
+  priceChange24h: number | null;
+  /** ISO 8601 pool creation timestamp, or null. */
+  poolCreatedAt: string | null;
+}
+
 /** Confidence labels for the recommendation card. */
 export type Confidence = "high" | "medium" | "low";
 

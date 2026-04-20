@@ -1,18 +1,32 @@
 import { notFound } from "next/navigation";
 
 import { TokenDetailShell } from "@/components/token/token-detail-shell";
-import { getTokenDetailPageData } from "@/lib/page-data/token-detail";
+import {
+  getTokenDetailPageData,
+  getTokenDetailFixtureFetchers,
+} from "@/lib/page-data/token-detail";
 import { isUpstreamError } from "@/lib/api/upstream-error";
 
 type TokenDetailPageProps = {
   params: Promise<{
     coinId: string;
   }>;
+  searchParams: Promise<{
+    fixture?: string;
+  }>;
 };
 
-async function loadTokenDetailPageData(coinId: string) {
+async function loadTokenDetailPageData(coinId: string, fixture?: string) {
   try {
-    return await getTokenDetailPageData(coinId);
+    const fixtureFetchers = fixture
+      ? getTokenDetailFixtureFetchers(fixture)
+      : undefined;
+
+    return await getTokenDetailPageData(
+      coinId,
+      fixtureFetchers?.fetchCoinDetail,
+      fixtureFetchers?.fetchPools
+    );
   } catch (error) {
     if (isUpstreamError(error) && error.category === "not_found") {
       notFound();
@@ -24,9 +38,11 @@ async function loadTokenDetailPageData(coinId: string) {
 
 export default async function TokenDetailPage({
   params,
+  searchParams,
 }: TokenDetailPageProps) {
   const { coinId } = await params;
-  const data = await loadTokenDetailPageData(coinId);
+  const resolvedSearchParams = await searchParams;
+  const data = await loadTokenDetailPageData(coinId, resolvedSearchParams?.fixture);
 
   return (
     <main className="flex flex-1">

@@ -6,6 +6,8 @@ import type {
 } from "@/lib/page-data/discovery";
 import type { KnownChainId } from "@/lib/types";
 
+import Link from "next/link";
+import { buildPoolPath } from "@/lib/constants/route";
 type DiscoveryTableProps = {
   rows: DiscoveryPageModel["rows"];
   totalSupported: number;
@@ -70,8 +72,9 @@ function FreshnessBadge({ freshness }: { freshness: FreshnessBucket }) {
 }
 
 function DiscoveryCard({ row }: { row: DiscoveryRow }) {
+  const href = buildPoolPath(row.networkId, row.poolAddress);
   return (
-    <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] p-3">
+    <Link href={href} className="block rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] p-3 transition hover:bg-white/[0.02]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <span className="block truncate text-sm font-semibold text-[color:var(--foreground)]">
@@ -116,7 +119,7 @@ function DiscoveryCard({ row }: { row: DiscoveryRow }) {
           </p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -175,9 +178,12 @@ export function DiscoveryTable({ rows, totalSupported, capped }: DiscoveryTableP
                 className="border-t border-[color:var(--border)] transition hover:bg-white/[0.02]"
               >
                 <td className="px-4 py-2.5">
-                  <span className="truncate font-semibold text-[color:var(--foreground)]">
+                  <Link
+                    href={buildPoolPath(row.networkId, row.poolAddress)}
+                    className="truncate font-semibold text-[color:var(--foreground)] hover:underline"
+                  >
                     {row.pairLabel}
-                  </span>
+                  </Link>
                 </td>
                 <td className="truncate px-4 py-2.5 text-[color:var(--muted)]">
                   {row.dexName}

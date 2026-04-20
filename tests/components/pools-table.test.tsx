@@ -160,4 +160,87 @@ describe("PoolsTable rendering", () => {
     expect(screen.getAllByText("Test Pair 11").length).toBeGreaterThanOrEqual(1);
     expect(within(table).getAllByRole("row")).toHaveLength(3);
   });
+
+  // -----------------------------------------------------------------------
+  // Pool link navigation
+  // -----------------------------------------------------------------------
+
+  describe("pool entry navigation", () => {
+    it("renders links with canonical pool hrefs using buildPoolPath", () => {
+      render(<PoolsTable pools={clearWinnerPools} />);
+
+      // First pool: chainId=1 (Ethereum), geckoTerminalNetwork="eth"
+      const expectedHref = "/pool/eth/0x1111111111111111111111111111111111111111";
+      const links = screen.getAllByRole("link");
+      const matchingLinks = links.filter(
+        (el) => (el as HTMLAnchorElement).href.endsWith(expectedHref)
+      );
+      // Same pool appears in both mobile card and desktop row
+      expect(matchingLinks.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("includes coinId query param when coinId prop is provided", () => {
+      render(<PoolsTable pools={clearWinnerPools} coinId="ethereum" />);
+
+      const expectedHref =
+        "/pool/eth/0x1111111111111111111111111111111111111111?coinId=ethereum";
+      const links = screen.getAllByRole("link");
+      const matchingLinks = links.filter(
+        (el) => (el as HTMLAnchorElement).href.endsWith(expectedHref)
+      );
+      expect(matchingLinks.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("omits coinId query param when coinId is not provided", () => {
+      render(<PoolsTable pools={clearWinnerPools} />);
+
+      const links = screen.getAllByRole("link");
+      for (const link of links) {
+        const href = (link as HTMLAnchorElement).href;
+        expect(href).not.toContain("coinId=");
+      }
+    });
+
+    it("renders one link per pool in both mobile and desktop layouts", () => {
+      render(<PoolsTable pools={clearWinnerPools} coinId="ethereum" />);
+
+      const links = screen.getAllByRole("link");
+      // clearWinnerPools has 3 pools; each appears in mobile card + desktop row = 6 links
+      expect(links).toHaveLength(clearWinnerPools.length * 2);
+    });
+
+    it("keeps the desktop pool link visible and keyboard-focusable", () => {
+      render(<PoolsTable pools={clearWinnerPools} coinId="ethereum" />);
+
+      const firstPool = clearWinnerPools[0]!;
+      const expectedHref = `/pool/eth/${firstPool.poolAddress}?coinId=ethereum`;
+      const desktopLink = screen
+        .getAllByRole("link", {
+          name: firstPool.pairLabel,
+        })
+        .find(
+          (link) => (link as HTMLAnchorElement).getAttribute("href") === expectedHref
+        ) as HTMLAnchorElement | undefined;
+
+      expect(desktopLink).toBeDefined();
+      expect(desktopLink).toHaveTextContent(firstPool.pairLabel);
+      expect(desktopLink).toHaveAttribute("href", expectedHref);
+      expect(desktopLink).not.toHaveAttribute("tabindex", "-1");
+    });
+
+    it("uses correct network slug for each chain", () => {
+      render(<PoolsTable pools={clearWinnerPools} />);
+
+      const links = screen.getAllByRole("link");
+      const hrefs = links.map((el) => (el as HTMLAnchorElement).href);
+
+      // chainId=1 (eth) appears for pools 1 and 3
+      const ethLinks = hrefs.filter((h) => h.includes("/pool/eth/"));
+      expect(ethLinks.length).toBeGreaterThanOrEqual(1);
+
+      // chainId=8453 (base) appears for pool 2
+      const baseLinks = hrefs.filter((h) => h.includes("/pool/base/"));
+      expect(baseLinks.length).toBeGreaterThanOrEqual(1);
+    });
+  });
 });

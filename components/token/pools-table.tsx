@@ -11,14 +11,17 @@
 // Mobile: card-based layout for each pool for readability.
 // =============================================================================
 
+import Link from "next/link";
+
 import { useEffect, useMemo, useState } from "react";
 
 import type { PoolCandidate, KnownChainId } from "@/lib/types";
-import { getChainDef } from "@/lib/constants";
+import { buildPoolPath, getChainDef } from "@/lib/constants";
 
 type PoolsTableProps = {
   pools: PoolCandidate[];
   recommendedPoolAddress?: string;
+  coinId?: string;
 };
 
 const POOLS_PER_PAGE = 10;
@@ -70,6 +73,11 @@ function changeColor(value: number | null | undefined): string {
   return "text-[color:var(--muted)]";
 }
 
+/** Derive the canonical pool path from pool metadata and optional token context. */
+function poolHref(pool: PoolCandidate, coinId?: string): string {
+  const network = getChainDef(pool.chainId)?.geckoTerminalNetwork ?? "";
+  return buildPoolPath(network, pool.poolAddress, coinId);
+}
 /**
  * Build a truncated list of page numbers with ellipsis gaps.
  * Always shows first 2, last 2, and ±1 around the current page.
@@ -188,7 +196,7 @@ function PoolCard({
 }) {
   return (
     <div
-      className="rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] p-3"
+      className="rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] p-3 transition hover:border-[color:var(--accent)] hover:cursor-pointer"
     >
       {/* Header row */}
       <div className="flex items-center justify-between gap-2">
@@ -255,7 +263,7 @@ function PoolCard({
 // Main component
 // ---------------------------------------------------------------------------
 
-export function PoolsTable({ pools, recommendedPoolAddress }: PoolsTableProps) {
+export function PoolsTable({ pools, recommendedPoolAddress, coinId }: PoolsTableProps) {
   const pageCount = Math.ceil(pools.length / POOLS_PER_PAGE);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -308,11 +316,16 @@ export function PoolsTable({ pools, recommendedPoolAddress }: PoolsTableProps) {
             pool.poolAddress === recommendedPoolAddress;
 
           return (
-            <PoolCard
+            <Link
               key={`${pool.chainId}-${pool.poolAddress}`}
-              pool={pool}
-              isRecommended={isRecommended}
-            />
+              href={poolHref(pool, coinId)}
+              className="block"
+            >
+              <PoolCard
+                pool={pool}
+                isRecommended={isRecommended}
+              />
+            </Link>
           );
         })}
       </div>
@@ -358,9 +371,12 @@ export function PoolsTable({ pools, recommendedPoolAddress }: PoolsTableProps) {
                 >
                   <td className="px-4 py-2.5">
                     <div>
-                      <span className="truncate font-semibold text-[color:var(--foreground)]">
+                      <Link
+                        href={poolHref(pool, coinId)}
+                        className="inline-flex max-w-full rounded-sm font-semibold text-[color:var(--foreground)] underline decoration-transparent underline-offset-4 transition hover:text-[color:var(--accent)] hover:decoration-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
+                      >
                         {pool.pairLabel}
-                      </span>
+                      </Link>
                       {isRecommended && (
                         <span className="mt-0.5 inline-block rounded-full border border-[color:var(--accent)] border-opacity-30 bg-[color:var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold text-[color:var(--accent)]">
                           ★ Suggested

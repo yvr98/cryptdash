@@ -247,6 +247,7 @@ export function TokenDetailShell({ data }: TokenDetailShellProps) {
           <PoolsTable
             pools={data.eligiblePools}
             recommendedPoolAddress={data.recommendation.winner?.poolAddress}
+            coinId={data.token.coinId}
           />
 
           {/* Contract information — collapsed by default */}
