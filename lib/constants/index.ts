@@ -21,4 +21,6 @@ export {
 export {
   TOKEN_ROUTE_SEGMENT,
   buildTokenPath,
+  POOL_ROUTE_SEGMENT,
+  buildPoolPath,
 } from "./route";
