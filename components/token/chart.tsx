@@ -26,11 +26,11 @@ type OhlcvRouteResponse = {
 
 const CHART_TIMEFRAME = "hour";
 const CHART_LIMIT = 168;
-const NO_MARKET_MESSAGE =
+const FETCH_TIMEOUT_MS = 15_000;
+  const NO_MARKET_MESSAGE =
   "No eligible supported-chain market is available yet, so TokenScope cannot draw an hourly chart.";
-const ERROR_CHART_MESSAGE =
+  const ERROR_CHART_MESSAGE =
   "Chart data is temporarily unavailable for this market. Try again in a moment.";
-
 function formatUsd(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -83,6 +83,12 @@ export function TokenChart({ coinId, market }: TokenChartProps) {
 
     const controller = new AbortController();
     let isActive = true;
+    let timedOut = false;
+
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, FETCH_TIMEOUT_MS);
 
     async function loadChartData() {
       setIsLoading(true);
@@ -114,7 +120,17 @@ export function TokenChart({ coinId, market }: TokenChartProps) {
         setChartState(nextState);
         setFallbackMessage(nextState.message ?? EMPTY_CHART_MESSAGE);
       } catch (error) {
-        if (!isActive || controller.signal.aborted) {
+        if (!isActive) {
+          return;
+        }
+
+        if (timedOut) {
+          setChartState(buildTokenChartState([], ERROR_CHART_MESSAGE));
+          setFallbackMessage(ERROR_CHART_MESSAGE);
+          return;
+        }
+
+        if (controller.signal.aborted) {
           return;
         }
 
@@ -133,6 +149,7 @@ export function TokenChart({ coinId, market }: TokenChartProps) {
 
     return () => {
       isActive = false;
+      clearTimeout(timeoutId);
       controller.abort();
     };
   }, [coinId, market]);

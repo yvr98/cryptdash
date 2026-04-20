@@ -10,7 +10,7 @@
 
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 
 const lightweightChartsMocks = vi.hoisted(() => {
   const setData = vi.fn();
@@ -255,5 +255,46 @@ describe("deduplicates candles with identical timestamps", () => {
 
     // The second occurrence (close: 3515) should be kept
     expect(dupeCandle?.close).toBe(3515);
+  });
+});
+
+describe("chart shows error fallback when OHLCV request times out", () => {
+  it("renders Chart unavailable after fetch exceeds timeout", async () => {
+    const market = selectDefaultChartMarket(recommend(clearWinnerPools), clearWinnerPools);
+
+    stubChartBrowserApis();
+    vi.useFakeTimers();
+
+    try {
+      // Mock fetch that never resolves on its own but reacts to abort signal
+      vi.stubGlobal(
+        "fetch",
+        (_url: string, options: { signal?: AbortSignal }) =>
+          new Promise<never>((_, reject) => {
+            options.signal?.addEventListener("abort", () => {
+              reject(new DOMException("The operation was aborted.", "AbortError"));
+            });
+          })
+      );
+
+      render(createElement(TokenChart, { coinId: "ethereum", market }));
+
+      // Should show loading state initially
+      expect(screen.getByText("Loading chart data…")).toBeInTheDocument();
+
+      // Advance past the 15-second client-side timeout
+      await act(async () => {
+        vi.advanceTimersByTime(15_000);
+      });
+
+      // After timeout, loading should be replaced by error fallback
+      expect(screen.getByText("Chart unavailable")).toBeInTheDocument();
+      expect(
+        screen.getByText(/Chart data is temporarily unavailable/)
+      ).toBeInTheDocument();
+      expect(lightweightChartsMocks.createChart).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
