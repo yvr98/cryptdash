@@ -179,4 +179,45 @@ describe("DiscoveryPageShell", () => {
       screen.getByText("Trending pools could not be fully loaded.")
     ).toBeInTheDocument();
   });
+
+  it("links each discovery row to the canonical pool route without coinId", () => {
+    render(
+      <DiscoveryPageShell
+        data={{
+          ...BASE_MODEL,
+          dataState: COMPLETE_DATA_STATE,
+          copy: {
+            title: "Explore trending pools across supported chains",
+            description:
+              "Discovery order is upstream-ranked. TokenScope keeps the original feed order, filters it to supported chains, and shows the latest available liquidity, volume, activity, and freshness signals.",
+          },
+        }}
+      />
+    );
+
+    const links = screen.getAllByRole("link");
+
+    // Desktop: pair label links; Mobile: card links
+    // 2 rows × 2 surfaces = 4 links
+    expect(links).toHaveLength(4);
+
+    const hrefs = links.map((a) => a.getAttribute("href"));
+
+    const expectedEth = "/pool/eth/0x0000000000000000000000000000000000000001";
+    const expectedBase = "/pool/base/0x0000000000000000000000000000000000000002";
+
+    expect(hrefs.filter((h) => h === expectedEth)).toHaveLength(2);
+    expect(hrefs.filter((h) => h === expectedBase)).toHaveLength(2);
+
+    // Discovery must never append coinId query context
+    for (const href of hrefs) {
+      expect(href).not.toContain("coinId=");
+    }
+
+    // Desktop pair-label links carry correct text content
+    const pairLinks = links.filter(
+      (a) => a.textContent?.trim() === "WETH / USDC" || a.textContent?.trim() === "cbBTC / WETH"
+    );
+    expect(pairLinks).toHaveLength(2);
+  });
 });
