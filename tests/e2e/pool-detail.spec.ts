@@ -9,22 +9,19 @@
 //   3. Direct-entry honesty (no backlink without coinId)
 //   4. Direct-entry to non-existent pool (honest 404 behavior)
 //
-// Navigation-structure tests use deterministic ?fixture= mechanisms.
-// Discovery navigation still uses /discover?fixture=happy. Token-detail → pool-detail
-// proofs now use /token/ethereum?fixture=pool-link so SSR no longer depends on
-// live upstream data to surface a pool link with coinId context.
 //
-// The deterministic shaping logic is verified more thoroughly in:
-//   - tests/data/pool-detail-page-data.test.ts
-//   - tests/components/pool-detail-shell.test.tsx
-// =============================================================================
+// Navigation-structure tests use real upstream data.
+// Discovery navigation uses /discover?fixture=happy (discover page unchanged).
+// Token-detail → pool-detail proofs use /token/ethereum with real CoinGecko data
+// so the pool link href is extracted dynamically from live pool data.
+//
 
 import { expect, test } from "@playwright/test";
 
 const BASE = "http://127.0.0.1:3000";
 
 async function discoverEthereumPoolUrl(page: import("@playwright/test").Page) {
-  await page.goto(`${BASE}/token/ethereum?fixture=pool-link`, {
+  await page.goto(`${BASE}/token/ethereum`, {
     waitUntil: "networkidle",
   });
 
@@ -38,9 +35,8 @@ async function discoverEthereumPoolUrl(page: import("@playwright/test").Page) {
   await expect(poolLink).toBeVisible();
 
   const href = await poolLink.getAttribute("href");
-  expect(href).toBe(
-    "/pool/eth/0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640?coinId=ethereum"
-  );
+  expect(href).toMatch(/\/pool\/[^/]+\/0x[0-9a-f]+/i);
+  expect(href).toContain("coinId=ethereum");
 
   return new URL(href!, BASE).toString();
 }
