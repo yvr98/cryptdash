@@ -1,0 +1,39 @@
+# Dependencies
+/vendor/bundle/
+
+# Application
+/storage/*
+!/storage/.keep
+
+# Database
+/db/*.sqlite3
+/db/*.sqlite3-*
+
+# Logs
+/log/*
+!/log/.keep
+
+# Temporary files
+/tmp/*
+!/tmp/.keep
+!/tmp/pids/
+/tmp/pids/*
+!/tmp/pids/.keep
+!/tmp/storage/
+/tmp/storage/*
+!/tmp/storage/.keep
+
+# Credentials
+/config/master.key
+
+# Ignore pidfiles
+*.pid
+
+# Ignore precompiled assets
+/public/assets
+
+# Ignore node-based asset directories
+/node_modules
+/yarn-error.log
+/yarn-debug.log
+/.yarn-integrity
