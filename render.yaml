@@ -1,0 +1,25 @@
+# Render Blueprint — TokenScope Rails API.
+#
+# Single web service rooted in rails/. Neon provides production PostgreSQL;
+# set DATABASE_URL to the Neon connection string via the Render dashboard.
+# Vercel (Next.js frontend) reaches this service through RAILS_BASE_URL only.
+# No Neon Auth, Docker, workers, cron, Redis, or additional services.
+
+services:
+  - type: web
+    name: tokenscope-api
+    runtime: ruby
+    rootDir: rails
+    buildCommand: bundle install && bin/rails db:prepare
+    startCommand: bundle exec puma
+    buildFilter:
+      paths:
+        - rails/**
+        - render.yaml
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: RAILS_ENV
+        value: production
+      - key: SECRET_KEY_BASE
+        generateValue: true
