@@ -1,14 +1,15 @@
 # PROJECT KNOWLEDGE BASE
 
 ## OVERVIEW
-TokenScope is a focused Next.js App Router app for multi-chain token research. Canonical identity is always the CoinGecko `coinId`; GeckoTerminal supplies pools and OHLCV.
+TokenScope is a focused Next.js App Router app for multi-chain token research, with a sibling Rails API backend under `rails/`. Canonical identity is always the CoinGecko `coinId`; GeckoTerminal supplies pools and OHLCV.
 
 ## STRUCTURE
 ```text
 ./
-├── app/            # routes, layouts, route handlers
+├── app/            # routes, layouts, route handlers (Next.js)
 ├── components/     # UI; token detail shell is the main presentational hub
 ├── lib/            # adapters, page-model assembly, recommendation, chart, watchlist
+├── rails/          # Rails 8.1 API backend (Ruby 3.3.11, PostgreSQL)
 ├── tests/          # centralized Vitest + Playwright coverage
 └── public docs     # README, config, CI
 ```
@@ -27,6 +28,46 @@ TokenScope is a focused Next.js App Router app for multi-chain token research. C
 | Route identity | `lib/constants/route.ts` | never symbol-only routing |
 | Shared types | `lib/types/index.ts` | contracts reused everywhere |
 | E2E flows | `tests/e2e/*.spec.ts` | production-style server via Playwright |
+
+## RAILS SLICE (rails/)
+
+The `rails/` directory is an independent Rails 8.1 application serving as the API backend. It is **not** coupled to the Next.js runtime.
+
+### Local Toolchain
+
+| Requirement | Value |
+|-------------|-------|
+| Ruby version | **3.3.11** (pinned in `rails/.ruby-version`)
+| Rails version | **8.1.3** (see `rails/Gemfile`)
+| Database | **PostgreSQL** (local: `127.0.0.1:5432`; production: Neon) |
+| Web server | Puma
+| Dev port | **127.0.0.1:3001**
+
+### Setup (agents and developers)
+
+Prerequisites: Ruby 3.3.11, PostgreSQL running locally on `127.0.0.1:5432`, and the `libpq-dev` package (Ubuntu/Debian) or equivalent for building the `pg` gem.
+
+```bash
+# Ensure rbenv (or equivalent) resolves Ruby 3.3.11
+export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH" && eval "$(rbenv init - bash)"
+cd rails && bundle install && bin/rails db:prepare
+bin/rails server -p 3001   # http://127.0.0.1:3001
+```
+
+Local Postgres is configured via standard `PG*` environment variables (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`) or a local `DATABASE_URL`. See `rails/config/database.yml` for defaults.
+
+### Deployment Contract
+
+| Platform | Role | Owns | Does not own |
+|----------|------|------|--------------|
+| Neon | Managed Postgres | Production database | No app runtime |
+| Render | Rails API host | `DATABASE_URL` (Neon connection string, set via dashboard) | No frontend, no DB credentials on other platforms |
+| Vercel | Next.js host | `RAILS_BASE_URL` (Render Rails URL) | No DB credentials, no `DATABASE_URL` |
+
+- Neon Auth is **disabled** and out of scope. Neon is used only as a managed Postgres provider.
+- The Neon connection string is **private**. Create the Neon project manually; do not use Neon CLI init flows.
+- Render receives the Neon connection string as `DATABASE_URL` and does not share it with Vercel.
+- Vercel connects to Rails exclusively via `RAILS_BASE_URL`. No DB credentials should ever reach the Next.js environment.
 
 ## CODE MAP
 | Symbol | Type | Location | Refs | Role |
@@ -71,8 +112,10 @@ TokenScope is a focused Next.js App Router app for multi-chain token research. C
 - Watchlist state goes through a single localStorage abstraction with malformed-state recovery.
 
 ## COMMANDS
+
+### Next.js (root)
 ```bash
-npm run dev
+npm run dev           # http://127.0.0.1:3000
 npm run lint
 npm run test
 npm run test:e2e
@@ -80,9 +123,17 @@ npm run build
 npm run start
 ```
 
+### Rails (rails/)
+```bash
+cd rails && bin/rails server -p 3001   # http://127.0.0.1:3001
+cd rails && bin/rails test              # run Rails tests
+```
+
 ## NOTES
-- `NEXT_PUBLIC_APP_URL` and `COINGECKO_API_KEY` are expected in `.env.local`.
+- `NEXT_PUBLIC_APP_URL` and `COINGECKO_API_KEY` are expected in `.env.local` (Next.js only).
+- Rails expects `DATABASE_URL` (or `PG*` env vars) for all environments. See `rails/config/database.yml`.
 - CI runs `npm install`, `npm run test`, then `npm run build` on Node 24.
+- Next.js dev server: `127.0.0.1:3000`. Rails dev server: `127.0.0.1:3001`.
 - Playwright uses `tests/e2e` with `reuseExistingServer: true` on `127.0.0.1:3000`.
 - Process hygiene for local verification:
   - Check for an existing app server before starting another one.

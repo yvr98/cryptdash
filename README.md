@@ -49,6 +49,28 @@ npm run test       # Run 176 unit tests
 npm run build      # Production build
 ```
 
+### Rails API Backend (Optional)
+
+The `rails/` directory contains a Rails 8.1 API backend (Ruby 3.3.11, PostgreSQL). Local development requires PostgreSQL on `127.0.0.1:5432` and the `libpq-dev` package.
+
+```bash
+# Install Ruby 3.3.11 (e.g., via rbenv)
+cd rails && bundle install && bin/rails db:prepare
+bin/rails server -p 3001   # http://127.0.0.1:3001
+```
+
+Local Postgres is configured via `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` or a local `DATABASE_URL`. See `rails/config/database.yml` for defaults.
+
+#### Deployment
+
+| Platform | Owns |
+|----------|------|
+| Neon | Production Postgres database (connection string stays private) |
+| Render | Rails API host — stores `DATABASE_URL` (Neon connection string) |
+| Vercel | Next.js host — uses `RAILS_BASE_URL` only, never DB credentials |
+
+Neon Auth is disabled. Create the Neon project manually (no CLI init flows).
+
 ## How It Works
 
 1. **Search** for any token — the app resolves it via CoinGecko and maps contract addresses across supported chains
@@ -72,6 +94,7 @@ lib/
   watchlist/            localStorage abstraction with referential stability
   constants/            Chain definitions, route helpers
   types/                Shared TypeScript type definitions
+rails/                  Rails 8.1 API backend (Ruby 3.3.11, PostgreSQL)
 tests/                  176 unit tests across all modules
 ```
 

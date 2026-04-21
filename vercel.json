@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "if git diff --quiet HEAD^ HEAD -- . ':(exclude)rails/**' ':(exclude)render.yaml'; then echo 'No Next.js changes - skipping Vercel deploy'; exit 0; else echo 'Next.js/root changes detected - proceeding with Vercel deploy'; exit 1; fi"
+}
