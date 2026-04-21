@@ -268,3 +268,34 @@ export interface WatchlistEntry {
   /** Unix timestamp (ms) when the entry was added. */
   addedAt: number;
 }
+
+// ---------------------------------------------------------------------------
+// Rails Session Seam
+// ---------------------------------------------------------------------------
+
+/** Rails session capabilities reported by the backend. */
+export interface RailsCapabilities {
+  google_oauth: boolean;
+  write_auth_enabled: boolean;
+}
+
+/** Rails user info when authenticated. */
+export interface RailsUser {
+  email: string;
+}
+
+/** Raw session payload returned by the Rails GET /api/v1/session endpoint. */
+export interface RailsSessionPayload {
+  authenticated: boolean;
+  status: string;
+  user: RailsUser | null;
+  capabilities: RailsCapabilities;
+}
+
+/** Stable session response contract returned by the Rails session adapter. */
+export interface SessionResponse {
+  authenticated: boolean;
+  status: string;
+  user: RailsUser | null;
+  capabilities: RailsCapabilities;
+}
