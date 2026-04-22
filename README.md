@@ -82,6 +82,24 @@ Production config contract:
 
 The internal snapshot capture secret must be present on both platforms with the exact same value so Next.js can authenticate internal capture requests and Rails can verify them.
 
+### GitHub Actions-managed production deploys
+
+Production deploy intent is owned by GitHub Actions, not inferred solely from platform-side Git integrations:
+
+- frontend-owned path changes deploy **Vercel only**
+- Rails-owned path changes deploy **Render only**
+- mixed changes deploy **both** after CI passes
+
+Required GitHub repository secrets:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+- `RENDER_API_KEY`
+- `RENDER_SERVICE_ID`
+
+For this workflow to be the single source of truth, disable automatic Git-triggered production deploys in the Vercel and Render dashboards after wiring these secrets. Keep `vercel.json` and `render.yaml` path filters as defense-in-depth guardrails.
+
 ## How It Works
 
 1. **Search** for any token — the app resolves it via CoinGecko and maps contract addresses across supported chains
