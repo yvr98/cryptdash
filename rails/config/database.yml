@@ -5,21 +5,26 @@ default: &default
   host: <%= ENV.fetch("PGHOST", "127.0.0.1") %>
   port: <%= ENV.fetch("PGPORT", 5432) %>
   username: <%= ENV.fetch("PGUSER", "postgres") %>
-  password: <%= ENV.fetch("PGPASSWORD", "") %>
 
 # Development: DATABASE_URL takes precedence when set; otherwise falls back to
 # individual PG* vars with tokenscope_development as the default database.
+# PGPASSWORD is read only when explicitly provided; no password literal is
+# embedded in source control.
 development:
   <<: *default
   url: <%= ENV["DATABASE_URL"] %>
+  password: <%= ENV["PGPASSWORD"] %>
   database: <%= ENV.fetch("PGDATABASE", "tokenscope_development") %>
 
 # Test: when DATABASE_URL is set, derives a tokenscope_test database name so that
 # the test suite never silently shares the development database. Falls back to
 # individual PG* vars with tokenscope_test as the default database.
+# PGPASSWORD is read only when explicitly provided; no password literal is
+# embedded in source control.
 test:
   <<: *default
   url: <%= ENV["DATABASE_URL"]&.sub(%r{/[^/]*\z}, "/tokenscope_test") %>
+  password: <%= ENV["PGPASSWORD"] %>
   database: <%= ENV.fetch("PGDATABASE", "tokenscope_test") %>
 
 # Production requires DATABASE_URL — no local fallback.
