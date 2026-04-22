@@ -24,6 +24,13 @@ type OhlcvRouteResponse = {
   candles?: Candle[];
 };
 
+class ChartRequestTimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ChartRequestTimeoutError";
+  }
+}
+
 const CHART_TIMEFRAME = "hour";
 const CHART_LIMIT = 168;
 const FETCH_TIMEOUT_MS = 15_000;
@@ -49,6 +56,38 @@ function readToken(name: string, fallback: string) {
     .trim();
 
   return value || fallback;
+}
+
+async function fetchChartResponse(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number,
+  controller: AbortController
+) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(
+        new ChartRequestTimeoutError(
+          "Chart data request exceeded the client timeout window."
+        )
+      );
+      controller.abort();
+    }, timeoutMs);
+
+  });
+
+  try {
+    return await Promise.race([
+      fetch(input, { ...init, signal: controller.signal }),
+      timeoutPromise,
+    ]);
+  } finally {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+  }
 }
 
 export function TokenChart({ coinId, market }: TokenChartProps) {
@@ -83,13 +122,6 @@ export function TokenChart({ coinId, market }: TokenChartProps) {
 
     const controller = new AbortController();
     let isActive = true;
-    let timedOut = false;
-
-    const timeoutId = setTimeout(() => {
-      timedOut = true;
-      controller.abort();
-    }, FETCH_TIMEOUT_MS);
-
     async function loadChartData() {
       setIsLoading(true);
 
@@ -101,10 +133,14 @@ export function TokenChart({ coinId, market }: TokenChartProps) {
           limit: String(CHART_LIMIT),
         });
 
-        const response = await fetch(`/api/token/${coinId}/ohlcv?${query.toString()}`, {
-          signal: controller.signal,
-          cache: "no-store",
-        });
+        const response = await fetchChartResponse(
+          `/api/token/${coinId}/ohlcv?${query.toString()}`,
+          {
+            cache: "no-store",
+          },
+          FETCH_TIMEOUT_MS,
+          controller
+        );
 
         if (!response.ok) {
           throw new Error(`OHLCV request failed: ${response.status}`);
@@ -124,7 +160,7 @@ export function TokenChart({ coinId, market }: TokenChartProps) {
           return;
         }
 
-        if (timedOut) {
+        if (error instanceof ChartRequestTimeoutError) {
           setChartState(buildTokenChartState([], ERROR_CHART_MESSAGE));
           setFallbackMessage(ERROR_CHART_MESSAGE);
           return;
@@ -149,7 +185,6 @@ export function TokenChart({ coinId, market }: TokenChartProps) {
 
     return () => {
       isActive = false;
-      clearTimeout(timeoutId);
       controller.abort();
     };
   }, [coinId, market]);

@@ -16,6 +16,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { UpstreamError } from "@/lib/api/upstream-error";
 import type { PoolDetailPageData } from "@/lib/page-data/pool-detail";
+import type { PoolRecord } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -29,10 +30,18 @@ const mockGetPoolDetailPageData = vi.fn<
   ) => Promise<PoolDetailPageData>
 >();
 
+const mockFetchPoolRecord = vi.fn<
+  (network: string, poolAddress: string) => Promise<PoolRecord>
+>();
+
 vi.mock("@/lib/page-data/pool-detail", () => ({
   getPoolDetailPageData: (
     ...args: [string, string, string?]
   ) => mockGetPoolDetailPageData(...args),
+}));
+
+vi.mock("@/lib/api/geckoterminal", () => ({
+  fetchPoolRecord: (...args: [string, string]) => mockFetchPoolRecord(...args),
 }));
 
 const mockNotFound = vi.fn(() => {
@@ -51,6 +60,16 @@ import { generateMetadata } from "@/app/pool/[network]/[poolAddress]/page";
 // ---------------------------------------------------------------------------
 
 const SAMPLE_ADDRESS = "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640";
+
+// Minimal unavailable-state history baseline for metadata-only tests.
+const BASELINE_UNAVAILABLE_HISTORY: PoolDetailPageData["history"] = {
+  state: "unavailable",
+  cards: [
+    { label: "Liquidity", state: "sparse", latestValue: null, delta: null, points: [] },
+    { label: "24h Vol", state: "sparse", latestValue: null, delta: null, points: [] },
+    { label: "24h Txs", state: "sparse", latestValue: null, delta: null, points: [] },
+  ],
+};
 
 function makePoolPageData(
   overrides: Partial<PoolDetailPageData["pool"]> = {},
@@ -73,8 +92,15 @@ function makePoolPageData(
     },
     freshness: "Established",
     backlink: null,
+    history: BASELINE_UNAVAILABLE_HISTORY,
     dataState: { status: "complete", errors: [] },
   };
+}
+
+function makePoolRecord(
+  overrides: Partial<PoolRecord> = {},
+): PoolRecord {
+  return makePoolPageData(overrides).pool;
 }
 
 // ---------------------------------------------------------------------------
@@ -83,11 +109,12 @@ function makePoolPageData(
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockFetchPoolRecord.mockResolvedValue(makePoolRecord());
 });
 
 describe("pool route generateMetadata", () => {
   it("produces bounded metadata from complete pool data", async () => {
-    mockGetPoolDetailPageData.mockResolvedValue(makePoolPageData());
+    mockFetchPoolRecord.mockResolvedValue(makePoolRecord());
 
     const meta = await generateMetadata({
       params: Promise.resolve({ network: "eth", poolAddress: SAMPLE_ADDRESS }),
@@ -104,7 +131,7 @@ describe("pool route generateMetadata", () => {
   });
 
   it("canonical URL uses pool path without coinId query", async () => {
-    mockGetPoolDetailPageData.mockResolvedValue(makePoolPageData());
+    mockFetchPoolRecord.mockResolvedValue(makePoolRecord());
 
     const meta = await generateMetadata({
       params: Promise.resolve({ network: "eth", poolAddress: SAMPLE_ADDRESS }),
@@ -120,7 +147,7 @@ describe("pool route generateMetadata", () => {
   });
 
   it("canonical URL never includes coinId even when coinId is in searchParams", async () => {
-    mockGetPoolDetailPageData.mockResolvedValue(makePoolPageData());
+    mockFetchPoolRecord.mockResolvedValue(makePoolRecord());
 
     const meta = await generateMetadata({
       params: Promise.resolve({ network: "base", poolAddress: SAMPLE_ADDRESS }),
@@ -134,8 +161,8 @@ describe("pool route generateMetadata", () => {
   });
 
   it("produces metadata with fallback labels when pool has empty pairLabel", async () => {
-    mockGetPoolDetailPageData.mockResolvedValue(
-      makePoolPageData({ pairLabel: "", dexName: "" }),
+    mockFetchPoolRecord.mockResolvedValue(
+      makePoolRecord({ pairLabel: "", dexName: "" }),
     );
 
     const meta = await generateMetadata({
@@ -150,8 +177,8 @@ describe("pool route generateMetadata", () => {
   });
 
   it("produces metadata when pool has empty dexName", async () => {
-    mockGetPoolDetailPageData.mockResolvedValue(
-      makePoolPageData({ dexName: "" }),
+    mockFetchPoolRecord.mockResolvedValue(
+      makePoolRecord({ dexName: "" }),
     );
 
     const meta = await generateMetadata({
@@ -164,7 +191,7 @@ describe("pool route generateMetadata", () => {
   });
 
   it("calls notFound() on UpstreamError not_found", async () => {
-    mockGetPoolDetailPageData.mockRejectedValue(
+    mockFetchPoolRecord.mockRejectedValue(
       new UpstreamError("not_found", 404, "geckoterminal"),
     );
 
@@ -179,7 +206,7 @@ describe("pool route generateMetadata", () => {
   });
 
   it("metadata keys are bounded: title/description/og/twitter/canonical only", async () => {
-    mockGetPoolDetailPageData.mockResolvedValue(makePoolPageData());
+    mockFetchPoolRecord.mockResolvedValue(makePoolRecord());
 
     const meta = await generateMetadata({
       params: Promise.resolve({ network: "eth", poolAddress: SAMPLE_ADDRESS }),
@@ -198,7 +225,7 @@ describe("pool route generateMetadata", () => {
   });
 
   it("reuses canonical path format from buildPoolPath", async () => {
-    mockGetPoolDetailPageData.mockResolvedValue(makePoolPageData());
+    mockFetchPoolRecord.mockResolvedValue(makePoolRecord());
 
     const meta = await generateMetadata({
       params: Promise.resolve({
@@ -215,20 +242,19 @@ describe("pool route generateMetadata", () => {
     expect(url.search).toBe("");
   });
 
-  it("does not pass coinId to getPoolDetailPageData for metadata", async () => {
-    mockGetPoolDetailPageData.mockResolvedValue(makePoolPageData());
+  it("does not pass coinId into metadata pool fetches", async () => {
+    mockFetchPoolRecord.mockResolvedValue(makePoolRecord());
 
     await generateMetadata({
       params: Promise.resolve({ network: "eth", poolAddress: SAMPLE_ADDRESS }),
       searchParams: Promise.resolve({ coinId: "ethereum" }),
     });
 
-    // generateMetadata only awaits params — never forwards coinId to data layer
-    expect(mockGetPoolDetailPageData).toHaveBeenCalledWith(
+    expect(mockFetchPoolRecord).toHaveBeenCalledWith(
       "eth",
       SAMPLE_ADDRESS,
-      undefined,
     );
-    expect(mockGetPoolDetailPageData).toHaveBeenCalledTimes(1);
+    expect(mockFetchPoolRecord).toHaveBeenCalledTimes(1);
+    expect(mockGetPoolDetailPageData).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { HistoryMetricCard } from "@/components/pool/history-metric-card";
 import { getChainDef } from "@/lib/constants";
 import type { PoolDetailPageData } from "@/lib/page-data/pool-detail";
 import type { FreshnessBucket } from "@/lib/page-data/discovery";
@@ -18,6 +19,16 @@ function formatUsd(value: number | null): string {
 function formatCount(value: number | null): string {
   if (value === null) return "—";
   return value.toLocaleString();
+}
+
+function formatSignedAbsoluteDelta(
+  value: number | null,
+  formatter: (value: number | null) => string,
+): string {
+  if (value === null) return "—";
+
+  const sign = value >= 0 ? "+" : "-";
+  return `${sign}${formatter(Math.abs(value))}`;
 }
 
 function formatPriceChange(value: number | null): string {
@@ -188,6 +199,48 @@ export function PoolDetailShell({ data }: PoolDetailShellProps) {
               value={formatPriceChange(data.pool.priceChange24h)}
               valueClassName={changeColor(data.pool.priceChange24h)}
             />
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 sm:rounded-2xl sm:p-5 md:p-6">
+          <p className="text-xs font-medium uppercase tracking-wider text-[color:var(--muted)]">
+            Market history
+          </p>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">
+            Last 24 hours of stored liquidity, volume, and transaction activity for this pool.
+          </p>
+
+          {data.history.state === "sparse" && (
+            <p className="mt-2 text-sm text-[color:var(--muted)]">
+              History is still building for this pool. Check back after more snapshots are collected.
+            </p>
+          )}
+
+          {data.history.state === "unavailable" && (
+            <p className="mt-2 text-sm text-[color:var(--muted)]">
+              Stored history is temporarily unavailable for this pool. Try refreshing in a moment.
+            </p>
+          )}
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {data.history.cards.map((card) => {
+              const valueFormatter = card.label === "24h Txs" ? formatCount : formatUsd;
+              const value = valueFormatter(card.latestValue);
+              const deltaText = formatSignedAbsoluteDelta(card.delta, valueFormatter);
+              const deltaClassName = changeColor(card.delta);
+              const isSectionUnavailable = data.history.state === "unavailable";
+
+              return (
+                <HistoryMetricCard
+                  key={card.label}
+                  card={card}
+                  value={value}
+                  deltaText={deltaText}
+                  deltaClassName={deltaClassName}
+                  isSectionUnavailable={isSectionUnavailable}
+                />
+              );
+            })}
           </div>
         </section>
 

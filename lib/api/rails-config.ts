@@ -3,8 +3,9 @@
 // =============================================================================
 //
 // Centralized, server-only module for the Next.js ↔ Rails seam.
-// Owns reading and validating RAILS_BASE_URL, route/path constants,
-// timeout defaults, and documentary cookie/session/CSRF stance constants.
+// Owns reading and validating RAILS_BASE_URL, internal capture secret
+// configuration, route/path constants, timeout defaults, and documentary
+// cookie/session/CSRF stance constants.
 //
 // No other module should read process.env.RAILS_BASE_URL directly.
 // =============================================================================
@@ -15,6 +16,9 @@
 
 /** Local development default for the Rails sibling service. */
 const RAILS_BASE_URL_DEFAULT = "http://127.0.0.1:3001";
+
+/** Dedicated env var for the internal pool snapshot capture secret. */
+const RAILS_INTERNAL_SNAPSHOT_CAPTURE_SECRET_ENV = "INTERNAL_SNAPSHOT_CAPTURE_SECRET";
 
 /**
  * Read, trim, and validate the RAILS_BASE_URL environment variable.
@@ -55,6 +59,32 @@ export function getRailsBaseUrl(): string {
   return url;
 }
 
+/**
+ * Read the dedicated shared secret for the internal snapshot-capture seam.
+ *
+ * Returns the trimmed secret string when configured.
+ * - In production: throws if the secret is missing or empty.
+ * - In development/test: returns null when absent so local capture remains
+ *   explicitly disabled until configured.
+ */
+export function getRailsInternalSnapshotCaptureSecret(): string | null {
+  const raw = process.env[RAILS_INTERNAL_SNAPSHOT_CAPTURE_SECRET_ENV]?.trim();
+  const isMissing = !raw || raw.length === 0;
+
+  if (isMissing) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "INTERNAL_SNAPSHOT_CAPTURE_SECRET is required in production. " +
+        "Set it to the dedicated shared secret for the internal snapshot capture seam."
+      );
+    }
+
+    return null;
+  }
+
+  return raw;
+}
+
 // ---------------------------------------------------------------------------
 // Route / Path Constants
 // ---------------------------------------------------------------------------
@@ -62,12 +92,52 @@ export function getRailsBaseUrl(): string {
 /** Rails-side path for the session status endpoint (GET). */
 export const RAILS_SESSION_PATH = "/api/v1/session" as const;
 
+/** Rails-side header used only for the internal pool snapshot capture seam. */
+export const RAILS_INTERNAL_SNAPSHOT_CAPTURE_SECRET_HEADER =
+  "X-TokenScope-Internal-Capture-Secret" as const;
+
+/** Rails-side path template for the internal pool snapshot capture seam. */
+export const RAILS_POOL_SNAPSHOT_CAPTURE_PATH_TEMPLATE =
+  "/api/v1/pools/:network_id/:pool_address/snapshots/capture" as const;
+
+/** Rails-side path template for the public pool snapshot history read seam. */
+export const RAILS_POOL_SNAPSHOT_HISTORY_PATH_TEMPLATE =
+  "/api/v1/pools/:network_id/:pool_address/snapshots" as const;
+
+function encodeRailsPathSegment(value: string, field: string): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`Rails path requires a non-empty ${field}`);
+  }
+
+  return encodeURIComponent(value.trim());
+}
+
+/**
+ * Build the public snapshot history path for a pool.
+ * Centralizes route construction so adapters do not inline Rails route strings.
+ */
+export function getRailsPoolSnapshotHistoryPath(
+  networkId: string,
+  poolAddress: string
+): string {
+  return RAILS_POOL_SNAPSHOT_HISTORY_PATH_TEMPLATE.replace(
+    ":network_id",
+    encodeRailsPathSegment(networkId, "networkId")
+  ).replace(
+    ":pool_address",
+    encodeRailsPathSegment(poolAddress, "poolAddress")
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Timeout Defaults
 // ---------------------------------------------------------------------------
 
 /** Default request timeout (ms) for calls to the Rails seam. */
 export const RAILS_REQUEST_TIMEOUT_MS = 5_000 as const;
+
+/** Default request timeout (ms) for internal write calls to the Rails seam. */
+export const RAILS_INTERNAL_WRITE_REQUEST_TIMEOUT_MS = 5_000 as const;
 
 // ---------------------------------------------------------------------------
 // Cookie / Session / CSRF Stance Constants

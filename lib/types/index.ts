@@ -299,3 +299,37 @@ export interface SessionResponse {
   user: RailsUser | null;
   capabilities: RailsCapabilities;
 }
+
+// ---------------------------------------------------------------------------
+// Pool Snapshot History (Normalized Adapter Output)
+// ---------------------------------------------------------------------------
+
+/**
+ * A single normalized pool snapshot row from the Rails history endpoint.
+ * Raw Rails snake_case fields and string-encoded decimals are parsed into
+ * this shape at the adapter boundary.
+ */
+export interface PoolSnapshotRow {
+  /** ISO 8601 timestamp when the snapshot was captured. */
+  capturedAt: string;
+  /** Pool liquidity in USD, or null when the metric was absent. */
+  liquidityUsd: number | null;
+  /** 24-hour trading volume in USD, or null when the metric was absent. */
+  volume24hUsd: number | null;
+  /** 24-hour transaction count, or null when the metric was absent. */
+  transactions24h: number | null;
+}
+
+/**
+ * Normalized pool snapshot history envelope from the Rails public history endpoint.
+ * Adapter output — raw Rails payload types remain adapter-local.
+ * Rows are chronological (oldest-first).
+ */
+export interface PoolSnapshotHistory {
+  /** The query window in hours. */
+  windowHours: number;
+  /** Number of snapshot rows in this response. */
+  rowCount: number;
+  /** Chronological snapshot rows (oldest-first). */
+  rows: PoolSnapshotRow[];
+}

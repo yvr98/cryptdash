@@ -40,8 +40,11 @@ yarn-error.log*
 .sisyphus/drafts/
 .sisyphus/evidence/
 .sisyphus/notepads/
+.sisyphus/run-continuation/
 .sisyphus/boulder.json
 PREFLIGHT.md
+issue9-phase*-snapshot.md
+issue9-phase*-*-snapshot.md
 
 # typescript
 *.tsbuildinfo
