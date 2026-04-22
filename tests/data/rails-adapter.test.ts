@@ -15,8 +15,12 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 
 import { fetchRailsSession, buildForwardedCookieHeader } from "@/lib/api/rails-session";
+import { fetchPoolSnapshotHistory } from "@/lib/api/rails-pool-snapshots";
 import { UpstreamError, isUpstreamError } from "@/lib/api/upstream-error";
-import { RAILS_SESSION_COOKIE_NAME } from "@/lib/api/rails-config";
+import {
+  getRailsPoolSnapshotHistoryPath,
+  RAILS_SESSION_COOKIE_NAME,
+} from "@/lib/api/rails-config";
 
 // ---------------------------------------------------------------------------
 // Mock setup
@@ -33,6 +37,25 @@ const RAILS_OK_PAYLOAD = {
     google_oauth: false,
     write_auth_enabled: false,
   },
+};
+
+const RAILS_HISTORY_OK_PAYLOAD = {
+  window_hours: 24,
+  row_count: 2,
+  rows: [
+    {
+      captured_at: "2026-04-22T10:00:00.000Z",
+      liquidity_usd: "1234.56",
+      volume_24h_usd: "789.01",
+      transactions_24h: 42,
+    },
+    {
+      captured_at: "2026-04-22T11:00:00.000Z",
+      liquidity_usd: null,
+      volume_24h_usd: "456.78",
+      transactions_24h: null,
+    },
+  ],
 };
 
 function mockFetchSuccess(payload: unknown = RAILS_OK_PAYLOAD): void {
@@ -547,5 +570,242 @@ describe("fetchRailsSession — malformed response", () => {
       expect(isUpstreamError(err)).toBe(true);
       expect((err as UpstreamError).category).toBe("malformed");
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pool snapshot history adapter
+// ---------------------------------------------------------------------------
+
+describe("fetchPoolSnapshotHistory — happy path", () => {
+  test("returns normalized PoolSnapshotHistory for valid Rails payload", async () => {
+    mockFetchSuccess(RAILS_HISTORY_OK_PAYLOAD);
+
+    const result = await fetchPoolSnapshotHistory({
+      networkId: "ethereum",
+      poolAddress: "0xAbCdEf1234567890",
+    });
+
+    expect(result).toEqual({
+      windowHours: 24,
+      rowCount: 2,
+      rows: [
+        {
+          capturedAt: "2026-04-22T10:00:00.000Z",
+          liquidityUsd: 1234.56,
+          volume24hUsd: 789.01,
+          transactions24h: 42,
+        },
+        {
+          capturedAt: "2026-04-22T11:00:00.000Z",
+          liquidityUsd: null,
+          volume24hUsd: 456.78,
+          transactions24h: null,
+        },
+      ],
+    });
+  });
+
+  test("calls the centralized public history URL with hours=24", async () => {
+    mockFetchSuccess(RAILS_HISTORY_OK_PAYLOAD);
+
+    await fetchPoolSnapshotHistory({
+      networkId: "ethereum",
+      poolAddress: "0xAbCdEf1234567890",
+    });
+
+    const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(fetchCall[0]).toBe(
+      `http://127.0.0.1:3001${getRailsPoolSnapshotHistoryPath("ethereum", "0xAbCdEf1234567890")}?hours=24`
+    );
+    expect(fetchCall[1].method).toBe("GET");
+    expect(fetchCall[1].headers.Accept).toBe("application/json");
+  });
+
+  test("uses custom Rails base URL from env for history fetches", async () => {
+    process.env.RAILS_BASE_URL = "http://rails.internal:4000";
+    mockFetchSuccess(RAILS_HISTORY_OK_PAYLOAD);
+
+    await fetchPoolSnapshotHistory({
+      networkId: "base",
+      poolAddress: "0xpool",
+    });
+
+    const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(fetchCall[0]).toBe(
+      `http://rails.internal:4000${getRailsPoolSnapshotHistoryPath("base", "0xpool")}?hours=24`
+    );
+  });
+});
+
+describe("fetchPoolSnapshotHistory — timeout and connection failure", () => {
+  test("maps TimeoutError to UpstreamError timeout", async () => {
+    mockFetchNetworkError(new DOMException("The operation was aborted", "TimeoutError"));
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({
+      category: "timeout",
+      statusCode: 504,
+      source: "rails",
+    });
+  });
+
+  test("maps TypeError to UpstreamError timeout", async () => {
+    mockFetchNetworkError(new TypeError("fetch failed"));
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({
+      category: "timeout",
+      statusCode: 502,
+      source: "rails",
+    });
+  });
+});
+
+describe("fetchPoolSnapshotHistory — non-OK responses", () => {
+  test("maps 404 to UpstreamError not_found", async () => {
+    mockFetchStatus(404, false);
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({
+      category: "not_found",
+      statusCode: 404,
+      source: "rails",
+    });
+  });
+
+  test("maps 500 to UpstreamError server_error", async () => {
+    mockFetchStatus(500, false);
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({
+      category: "server_error",
+      statusCode: 500,
+      source: "rails",
+    });
+  });
+});
+
+describe("fetchPoolSnapshotHistory — malformed response", () => {
+  test("maps JSON parse error to UpstreamError malformed", async () => {
+    mockFetchJsonError();
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({
+      category: "malformed",
+      statusCode: 502,
+      source: "rails",
+    });
+  });
+
+  test("rejects payload with unexpected top-level keys", async () => {
+    mockFetchSuccess({ ...RAILS_HISTORY_OK_PAYLOAD, extra: true });
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({ category: "malformed", statusCode: 502, source: "rails" });
+  });
+
+  test("rejects payload with non-array rows", async () => {
+    mockFetchSuccess({ ...RAILS_HISTORY_OK_PAYLOAD, rows: null });
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({ category: "malformed", statusCode: 502, source: "rails" });
+  });
+
+  test("rejects payload when row_count does not match rows length", async () => {
+    mockFetchSuccess({ ...RAILS_HISTORY_OK_PAYLOAD, row_count: 1 });
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({ category: "malformed", statusCode: 502, source: "rails" });
+  });
+
+  test("rejects payload when window_hours is not exactly 24", async () => {
+    mockFetchSuccess({ ...RAILS_HISTORY_OK_PAYLOAD, window_hours: 12 });
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({ category: "malformed", statusCode: 502, source: "rails" });
+  });
+
+  test("rejects row with unexpected keys", async () => {
+    mockFetchSuccess({
+      ...RAILS_HISTORY_OK_PAYLOAD,
+      rows: [{ ...RAILS_HISTORY_OK_PAYLOAD.rows[0], extra: true }],
+      row_count: 1,
+    });
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({ category: "malformed", statusCode: 502, source: "rails" });
+  });
+
+  test("rejects row with invalid timestamp", async () => {
+    mockFetchSuccess({
+      ...RAILS_HISTORY_OK_PAYLOAD,
+      rows: [
+        {
+          ...RAILS_HISTORY_OK_PAYLOAD.rows[0],
+          captured_at: "not-a-timestamp",
+        },
+      ],
+      row_count: 1,
+    });
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({ category: "malformed", statusCode: 502, source: "rails" });
+  });
+
+  test("rejects row with invalid decimal string", async () => {
+    mockFetchSuccess({
+      ...RAILS_HISTORY_OK_PAYLOAD,
+      rows: [
+        {
+          ...RAILS_HISTORY_OK_PAYLOAD.rows[0],
+          liquidity_usd: "NaN",
+        },
+      ],
+      row_count: 1,
+    });
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({ category: "malformed", statusCode: 502, source: "rails" });
+  });
+
+  test("rejects row with invalid integer metric", async () => {
+    mockFetchSuccess({
+      ...RAILS_HISTORY_OK_PAYLOAD,
+      rows: [
+        {
+          ...RAILS_HISTORY_OK_PAYLOAD.rows[0],
+          transactions_24h: 3.14,
+        },
+      ],
+      row_count: 1,
+    });
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({ category: "malformed", statusCode: 502, source: "rails" });
+  });
+
+  test("rejects rows that are not chronological oldest-first", async () => {
+    mockFetchSuccess({
+      ...RAILS_HISTORY_OK_PAYLOAD,
+      rows: [...RAILS_HISTORY_OK_PAYLOAD.rows].reverse(),
+    });
+
+    await expect(
+      fetchPoolSnapshotHistory({ networkId: "ethereum", poolAddress: "0xpool" })
+    ).rejects.toMatchObject({ category: "malformed", statusCode: 502, source: "rails" });
   });
 });

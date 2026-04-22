@@ -16,6 +16,7 @@ import { UpstreamError, classifyHttpStatus } from "@/lib/api/upstream-error";
 
 const COINGECKO_ONCHAIN_BASE = "https://api.coingecko.com/api/v3/onchain";
 const JSON_ACCEPT = "application/json";
+const COINGECKO_ONCHAIN_TIMEOUT_MS = 15_000;
 
 function buildHeaders(): HeadersInit {
   const apiKey = process.env.COINGECKO_API_KEY;
@@ -24,6 +25,37 @@ function buildHeaders(): HeadersInit {
     Accept: JSON_ACCEPT,
     ...(apiKey ? { "x-cg-demo-api-key": apiKey } : {}),
   };
+}
+
+async function fetchOnchainJson(url: string) {
+  let res: Response;
+
+  try {
+    res = await fetch(url, {
+      headers: buildHeaders(),
+      signal: AbortSignal.timeout(COINGECKO_ONCHAIN_TIMEOUT_MS),
+    });
+  } catch (err: unknown) {
+    if (err instanceof DOMException && err.name === "TimeoutError") {
+      throw new UpstreamError("timeout", 504, "geckoterminal");
+    }
+
+    if (err instanceof TypeError) {
+      throw new UpstreamError("timeout", 502, "geckoterminal");
+    }
+
+    throw new UpstreamError("timeout", 502, "geckoterminal");
+  }
+
+  if (!res.ok) {
+    throw new UpstreamError(classifyHttpStatus(res.status), res.status, "geckoterminal");
+  }
+
+  try {
+    return (await res.json()) as unknown;
+  } catch {
+    throw new UpstreamError("malformed", 502, "geckoterminal");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -138,13 +170,7 @@ export async function fetchOhlcv(
   limit: number = 168
 ): Promise<Candle[]> {
   const url = `${COINGECKO_ONCHAIN_BASE}/networks/${network}/pools/${encodeURIComponent(poolAddress)}/ohlcv/${timeframe}?limit=${limit}`;
-  const res = await fetch(url, { headers: buildHeaders() });
-
-  if (!res.ok) {
-    throw new UpstreamError(classifyHttpStatus(res.status), res.status, "geckoterminal");
-  }
-
-  const data: OhlcvResponse = await res.json();
+  const data = (await fetchOnchainJson(url)) as OhlcvResponse;
   const rawList = data?.data?.attributes?.ohlcv_list ?? [];
 
   return normalizeOhlcv(rawList);
@@ -230,13 +256,7 @@ export async function fetchPoolsForToken(
   contractAddress: string
 ): Promise<PoolCandidate[]> {
   const url = `${COINGECKO_ONCHAIN_BASE}/networks/${network}/tokens/${encodeURIComponent(contractAddress)}/pools`;
-  const res = await fetch(url, { headers: buildHeaders() });
-
-  if (!res.ok) {
-    throw new UpstreamError(classifyHttpStatus(res.status), res.status, "geckoterminal");
-  }
-
-  const data: PoolsResponse = await res.json();
+  const data = (await fetchOnchainJson(url)) as PoolsResponse;
   const rawPools = data?.data ?? [];
 
   return rawPools
@@ -297,13 +317,7 @@ export async function fetchPoolRecord(
   poolAddress: string,
 ): Promise<PoolRecord> {
   const url = `${COINGECKO_ONCHAIN_BASE}/networks/${network}/pools/${encodeURIComponent(poolAddress)}`;
-  const res = await fetch(url, { headers: buildHeaders() });
-
-  if (!res.ok) {
-    throw new UpstreamError(classifyHttpStatus(res.status), res.status, "geckoterminal");
-  }
-
-  const data: SinglePoolResponse = await res.json();
+  const data = (await fetchOnchainJson(url)) as SinglePoolResponse;
   const rawPool = data?.data;
   if (!rawPool) {
     throw new UpstreamError("not_found", 404, "geckoterminal");

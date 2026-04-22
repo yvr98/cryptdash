@@ -6,11 +6,15 @@
 // /pool/[network]/[poolAddress].
 // =============================================================================
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import type { CapturePoolSnapshotResult } from "@/lib/api/rails-pool-snapshots";
 import { UpstreamError } from "@/lib/api/upstream-error";
-import { getPoolDetailPageData } from "@/lib/page-data/pool-detail";
-import type { PoolRecord } from "@/lib/types";
+import {
+  getPoolDetailPageData,
+  type PoolDetailPageDataSideEffects,
+} from "@/lib/page-data/pool-detail";
+import type { PoolRecord, PoolSnapshotHistory } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -90,6 +94,49 @@ function genericErrorFetcher(): (
   };
 }
 
+function createSideEffects(
+  overrides: PoolDetailPageDataSideEffects = {},
+): Required<PoolDetailPageDataSideEffects> {
+  return {
+    captureSnapshot: overrides.captureSnapshot ?? vi.fn().mockResolvedValue({ status: "created", capturedAt: "2026-04-22T00:00:00.000Z" }),
+    logCaptureFailure: overrides.logCaptureFailure ?? vi.fn(),
+    readHistory:
+      overrides.readHistory ??
+      vi.fn().mockResolvedValue(createHistoryFixture()),
+  };
+}
+
+function createHistoryFixture(
+  overrides: Partial<PoolSnapshotHistory> = {},
+): PoolSnapshotHistory {
+  const rows = overrides.rows ?? [
+    {
+      capturedAt: "2026-04-21T22:00:00.000Z",
+      liquidityUsd: 100,
+      volume24hUsd: 10,
+      transactions24h: 1,
+    },
+    {
+      capturedAt: "2026-04-21T23:00:00.000Z",
+      liquidityUsd: 200,
+      volume24hUsd: 20,
+      transactions24h: 2,
+    },
+    {
+      capturedAt: "2026-04-22T00:00:00.000Z",
+      liquidityUsd: 300,
+      volume24hUsd: 30,
+      transactions24h: 3,
+    },
+  ];
+
+  return {
+    windowHours: overrides.windowHours ?? 24,
+    rowCount: overrides.rowCount ?? rows.length,
+    rows,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -99,18 +146,107 @@ describe("getPoolDetailPageData", () => {
 
   it("returns complete page model with full pool data", async () => {
     const pool = createPoolRecordFixture();
+    const sideEffects = createSideEffects();
     const result = await getPoolDetailPageData(
       "eth",
       "0xabc1230000000000000000000000000000000001",
       undefined,
       happyFetcher(),
       REFERENCE_NOW,
+      sideEffects,
     );
 
     expect(result.pool).toEqual(pool);
+    expect(result.history).toEqual({
+      state: "ready",
+      cards: [
+        {
+          label: "Liquidity",
+          state: "ready",
+          latestValue: 300,
+          delta: 200,
+          points: [
+            { timestamp: "2026-04-21T22:00:00.000Z", value: 100 },
+            { timestamp: "2026-04-21T23:00:00.000Z", value: 200 },
+            { timestamp: "2026-04-22T00:00:00.000Z", value: 300 },
+          ],
+        },
+        {
+          label: "24h Vol",
+          state: "ready",
+          latestValue: 30,
+          delta: 20,
+          points: [
+            { timestamp: "2026-04-21T22:00:00.000Z", value: 10 },
+            { timestamp: "2026-04-21T23:00:00.000Z", value: 20 },
+            { timestamp: "2026-04-22T00:00:00.000Z", value: 30 },
+          ],
+        },
+        {
+          label: "24h Txs",
+          state: "ready",
+          latestValue: 3,
+          delta: 2,
+          points: [
+            { timestamp: "2026-04-21T22:00:00.000Z", value: 1 },
+            { timestamp: "2026-04-21T23:00:00.000Z", value: 2 },
+            { timestamp: "2026-04-22T00:00:00.000Z", value: 3 },
+          ],
+        },
+      ],
+    });
     expect(result.dataState.status).toBe("complete");
     expect(result.dataState.errors).toEqual([]);
     expect(result.backlink).toBeNull();
+    expect(sideEffects.captureSnapshot).toHaveBeenCalledTimes(1);
+    expect(sideEffects.readHistory).toHaveBeenCalledTimes(1);
+    expect(sideEffects.readHistory).toHaveBeenCalledWith({
+      networkId: "eth",
+      poolAddress: pool.poolAddress,
+      hours: 24,
+    });
+    expect(sideEffects.captureSnapshot).toHaveBeenCalledWith({
+      networkId: pool.networkId,
+      poolAddress: pool.poolAddress,
+      liquidityUsd: pool.liquidityUsd,
+      volume24hUsd: pool.volume24hUsd,
+      transactions24h: pool.transactions24h,
+    });
+  });
+
+  it("does not await capture before returning the live page model", async () => {
+    let resolveCapture:
+      | ((value: CapturePoolSnapshotResult) => void)
+      | undefined;
+    const sideEffects = createSideEffects({
+      captureSnapshot: vi.fn(
+        () =>
+          new Promise<CapturePoolSnapshotResult>((resolve) => {
+            resolveCapture = resolve;
+          }),
+      ),
+    });
+
+    const resultPromise = getPoolDetailPageData(
+      "eth",
+      "0xabc",
+      undefined,
+      happyFetcher(),
+      REFERENCE_NOW,
+      sideEffects,
+    );
+
+    await expect(resultPromise).resolves.toMatchObject({
+      dataState: { status: "complete", errors: [] },
+      history: { state: "ready" },
+      pool: createPoolRecordFixture(),
+    });
+    expect(sideEffects.captureSnapshot).toHaveBeenCalledTimes(1);
+
+    resolveCapture?.({
+      status: "created",
+      capturedAt: "2026-04-22T00:00:00.000Z",
+    });
   });
 
   // --- Freshness buckets ---
@@ -184,12 +320,15 @@ describe("getPoolDetailPageData", () => {
   // --- Not-found propagation ---
 
   it("propagates UpstreamError not_found for route-level notFound()", async () => {
+    const sideEffects = createSideEffects();
     await expect(
       getPoolDetailPageData(
         "eth",
         "0xnonexistent",
         undefined,
         notFoundFetcher(),
+        undefined,
+        sideEffects,
       ),
     ).rejects.toThrow();
 
@@ -199,22 +338,30 @@ describe("getPoolDetailPageData", () => {
         "0xnonexistent",
         undefined,
         notFoundFetcher(),
+        undefined,
+        sideEffects,
       );
     } catch (err) {
       expect(err).toBeInstanceOf(UpstreamError);
       expect((err as UpstreamError).category).toBe("not_found");
     }
+
+    expect(sideEffects.captureSnapshot).not.toHaveBeenCalled();
+    expect(sideEffects.readHistory).not.toHaveBeenCalled();
+    expect(sideEffects.logCaptureFailure).not.toHaveBeenCalled();
   });
 
   // --- Degraded states ---
 
   it("returns degraded stub pool on rate_limited error", async () => {
+    const sideEffects = createSideEffects();
     const result = await getPoolDetailPageData(
       "eth",
       "0xabc1230000000000000000000000000000000001",
       undefined,
       rateLimitedFetcher(),
       REFERENCE_NOW,
+      sideEffects,
     );
 
     expect(result.dataState.status).toBe("upstream_error");
@@ -242,6 +389,35 @@ describe("getPoolDetailPageData", () => {
 
     // Freshness is Unknown for stub pool
     expect(result.freshness).toBe("Unknown");
+    expect(result.history).toEqual({
+      state: "unavailable",
+      cards: [
+        {
+          label: "Liquidity",
+          state: "sparse",
+          latestValue: null,
+          delta: null,
+          points: [],
+        },
+        {
+          label: "24h Vol",
+          state: "sparse",
+          latestValue: null,
+          delta: null,
+          points: [],
+        },
+        {
+          label: "24h Txs",
+          state: "sparse",
+          latestValue: null,
+          delta: null,
+          points: [],
+        },
+      ],
+    });
+    expect(sideEffects.captureSnapshot).not.toHaveBeenCalled();
+    expect(sideEffects.readHistory).not.toHaveBeenCalled();
+    expect(sideEffects.logCaptureFailure).not.toHaveBeenCalled();
   });
 
   it("returns degraded stub pool on server_error", async () => {
@@ -360,6 +536,7 @@ describe("getPoolDetailPageData", () => {
   // --- Not-found vs degraded distinction ---
 
   it("distinguishes not-found from degraded: not-found throws, degraded returns model", async () => {
+    const sideEffects = createSideEffects();
     // Not-found: throws
     await expect(
       getPoolDetailPageData(
@@ -367,6 +544,8 @@ describe("getPoolDetailPageData", () => {
         "0xmissing",
         undefined,
         notFoundFetcher(),
+        undefined,
+        sideEffects,
       ),
     ).rejects.toThrow();
 
@@ -377,9 +556,130 @@ describe("getPoolDetailPageData", () => {
       undefined,
       rateLimitedFetcher(),
       REFERENCE_NOW,
+      sideEffects,
     );
     expect(degraded.dataState.status).toBe("upstream_error");
     expect(degraded.pool).toBeDefined();
+    expect(sideEffects.captureSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("keeps returned live page data unchanged when capture fails and logs once", async () => {
+    const pool = createPoolRecordFixture();
+    const captureError = new Error("capture transport failed");
+    const sideEffects = createSideEffects({
+      captureSnapshot: vi.fn().mockRejectedValue(captureError),
+      logCaptureFailure: vi.fn(),
+    });
+
+    const result = await getPoolDetailPageData(
+      "eth",
+      pool.poolAddress,
+      "ethereum",
+      happyFetcher(),
+      REFERENCE_NOW,
+      sideEffects,
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(result).toEqual({
+      pool,
+      freshness: "Established",
+      backlink: {
+        coinId: "ethereum",
+        tokenPath: "/token/ethereum",
+      },
+      history: {
+        state: "ready",
+        cards: [
+          {
+            label: "Liquidity",
+            state: "ready",
+            latestValue: 300,
+            delta: 200,
+            points: [
+              { timestamp: "2026-04-21T22:00:00.000Z", value: 100 },
+              { timestamp: "2026-04-21T23:00:00.000Z", value: 200 },
+              { timestamp: "2026-04-22T00:00:00.000Z", value: 300 },
+            ],
+          },
+          {
+            label: "24h Vol",
+            state: "ready",
+            latestValue: 30,
+            delta: 20,
+            points: [
+              { timestamp: "2026-04-21T22:00:00.000Z", value: 10 },
+              { timestamp: "2026-04-21T23:00:00.000Z", value: 20 },
+              { timestamp: "2026-04-22T00:00:00.000Z", value: 30 },
+            ],
+          },
+          {
+            label: "24h Txs",
+            state: "ready",
+            latestValue: 3,
+            delta: 2,
+            points: [
+              { timestamp: "2026-04-21T22:00:00.000Z", value: 1 },
+              { timestamp: "2026-04-21T23:00:00.000Z", value: 2 },
+              { timestamp: "2026-04-22T00:00:00.000Z", value: 3 },
+            ],
+          },
+        ],
+      },
+      dataState: {
+        status: "complete",
+        errors: [],
+      },
+    });
+    expect(sideEffects.captureSnapshot).toHaveBeenCalledTimes(1);
+    expect(sideEffects.logCaptureFailure).toHaveBeenCalledTimes(1);
+    expect(sideEffects.logCaptureFailure).toHaveBeenCalledWith(captureError, {
+      networkId: pool.networkId,
+      poolAddress: pool.poolAddress,
+      liquidityUsd: pool.liquidityUsd,
+      volume24hUsd: pool.volume24hUsd,
+      transactions24h: pool.transactions24h,
+    });
+  });
+
+  it("keeps returned live page data unchanged when capture is skipped", async () => {
+    const sideEffects = createSideEffects({
+      captureSnapshot: vi.fn().mockResolvedValue({
+        status: "skipped",
+        reason: "no_metrics",
+      }),
+    });
+
+    const result = await getPoolDetailPageData(
+      "eth",
+      "0xabc",
+      undefined,
+      happyFetcher({
+        liquidityUsd: null,
+        volume24hUsd: null,
+        transactions24h: null,
+        poolCreatedAt: null,
+      }),
+      REFERENCE_NOW,
+      sideEffects,
+    );
+
+    expect(result.dataState).toEqual({
+      status: "complete",
+      errors: [],
+    });
+    expect(result.pool).toEqual(
+      createPoolRecordFixture({
+        liquidityUsd: null,
+        volume24hUsd: null,
+        transactions24h: null,
+        poolCreatedAt: null,
+      }),
+    );
+    expect(result.freshness).toBe("Unknown");
+    expect(sideEffects.captureSnapshot).toHaveBeenCalledTimes(1);
+    expect(sideEffects.logCaptureFailure).not.toHaveBeenCalled();
   });
 
 
@@ -496,5 +796,143 @@ describe("getPoolDetailPageData", () => {
 
     const serialized = JSON.parse(JSON.stringify(result));
     expect(serialized).toEqual(result);
+  });
+
+  it("shapes sparse history when rails read succeeds without any ready card", async () => {
+    const sideEffects = createSideEffects({
+      readHistory: vi.fn().mockResolvedValue(
+        createHistoryFixture({
+          rows: [
+            {
+              capturedAt: "2026-04-21T22:00:00.000Z",
+              liquidityUsd: 100,
+              volume24hUsd: null,
+              transactions24h: 1,
+            },
+            {
+              capturedAt: "2026-04-21T23:00:00.000Z",
+              liquidityUsd: null,
+              volume24hUsd: 20,
+              transactions24h: null,
+            },
+          ],
+        }),
+      ),
+    });
+
+    const result = await getPoolDetailPageData(
+      "eth",
+      "0xabc",
+      undefined,
+      happyFetcher(),
+      REFERENCE_NOW,
+      sideEffects,
+    );
+
+    expect(result.history).toEqual({
+      state: "sparse",
+      cards: [
+        {
+          label: "Liquidity",
+          state: "sparse",
+          latestValue: 100,
+          delta: 0,
+          points: [{ timestamp: "2026-04-21T22:00:00.000Z", value: 100 }],
+        },
+        {
+          label: "24h Vol",
+          state: "sparse",
+          latestValue: 20,
+          delta: 0,
+          points: [{ timestamp: "2026-04-21T23:00:00.000Z", value: 20 }],
+        },
+        {
+          label: "24h Txs",
+          state: "sparse",
+          latestValue: 1,
+          delta: 0,
+          points: [{ timestamp: "2026-04-21T22:00:00.000Z", value: 1 }],
+        },
+      ],
+    });
+  });
+
+  it("returns unavailable history when rails history read fails without changing live pool behavior", async () => {
+    const sideEffects = createSideEffects({
+      readHistory: vi.fn().mockRejectedValue(new UpstreamError("timeout", 504, "rails")),
+    });
+
+    const result = await getPoolDetailPageData(
+      "eth",
+      "0xabc",
+      undefined,
+      happyFetcher(),
+      REFERENCE_NOW,
+      sideEffects,
+    );
+
+    expect(result.pool).toEqual(createPoolRecordFixture());
+    expect(result.dataState).toEqual({
+      status: "complete",
+      errors: [],
+    });
+    expect(result.history.state).toBe("unavailable");
+    expect(result.history.cards).toEqual([
+      {
+        label: "Liquidity",
+        state: "sparse",
+        latestValue: null,
+        delta: null,
+        points: [],
+      },
+      {
+        label: "24h Vol",
+        state: "sparse",
+        latestValue: null,
+        delta: null,
+        points: [],
+      },
+      {
+        label: "24h Txs",
+        state: "sparse",
+        latestValue: null,
+        delta: null,
+        points: [],
+      },
+    ]);
+  });
+
+  it("returns unavailable history when injected reader returns an unusable payload", async () => {
+    const sideEffects = createSideEffects({
+      readHistory: vi.fn().mockResolvedValue({ rows: null } as unknown as PoolSnapshotHistory),
+    });
+
+    const result = await getPoolDetailPageData(
+      "eth",
+      "0xabc",
+      undefined,
+      happyFetcher(),
+      REFERENCE_NOW,
+      sideEffects,
+    );
+
+    expect(result.history.state).toBe("unavailable");
+  });
+
+  it("does not attempt rails history read when live pool fetch degrades to a stub", async () => {
+    const sideEffects = createSideEffects();
+
+    const result = await getPoolDetailPageData(
+      "eth",
+      "0xabc",
+      undefined,
+      rateLimitedFetcher(),
+      REFERENCE_NOW,
+      sideEffects,
+    );
+
+    expect(result.dataState.status).toBe("upstream_error");
+    expect(result.history.state).toBe("unavailable");
+    expect(sideEffects.readHistory).not.toHaveBeenCalled();
   });
 });
