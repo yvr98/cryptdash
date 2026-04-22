@@ -18,8 +18,12 @@ import { describe, test, expect, beforeEach, afterEach } from "vitest";
 
 import {
   getRailsBaseUrl,
+  getRailsInternalSnapshotCaptureSecret,
   RAILS_SESSION_PATH,
+  RAILS_INTERNAL_SNAPSHOT_CAPTURE_SECRET_HEADER,
+  RAILS_POOL_SNAPSHOT_CAPTURE_PATH_TEMPLATE,
   RAILS_REQUEST_TIMEOUT_MS,
+  RAILS_INTERNAL_WRITE_REQUEST_TIMEOUT_MS,
   RAILS_SESSION_COOKIE_NAME,
   RAILS_COOKIE_FORWARDING_ENABLED,
 } from "@/lib/api/rails-config";
@@ -29,11 +33,22 @@ import type {
 } from "@/lib/types";
 
 const ORIGINAL_RAILS_URL = process.env.RAILS_BASE_URL;
+const ORIGINAL_CAPTURE_SECRET = process.env.INTERNAL_SNAPSHOT_CAPTURE_SECRET;
 const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
+
+function setNodeEnv(value: string | undefined): void {
+  Object.defineProperty(process.env, "NODE_ENV", {
+    value,
+    configurable: true,
+    enumerable: true,
+    writable: true,
+  });
+}
 
 describe("getRailsBaseUrl", () => {
   beforeEach(() => {
     delete process.env.RAILS_BASE_URL;
+    delete process.env.INTERNAL_SNAPSHOT_CAPTURE_SECRET;
   });
 
   afterEach(() => {
@@ -42,7 +57,14 @@ describe("getRailsBaseUrl", () => {
     } else {
       delete process.env.RAILS_BASE_URL;
     }
-    process.env.NODE_ENV = ORIGINAL_NODE_ENV;
+
+    if (ORIGINAL_CAPTURE_SECRET !== undefined) {
+      process.env.INTERNAL_SNAPSHOT_CAPTURE_SECRET = ORIGINAL_CAPTURE_SECRET;
+    } else {
+      delete process.env.INTERNAL_SNAPSHOT_CAPTURE_SECRET;
+    }
+
+    setNodeEnv(ORIGINAL_NODE_ENV);
   });
 
   // -----------------------------------------------------------------------
@@ -50,20 +72,20 @@ describe("getRailsBaseUrl", () => {
   // -----------------------------------------------------------------------
 
   test("returns local default when env is not set (non-production)", () => {
-    process.env.NODE_ENV = "test";
+    setNodeEnv("test");
     const url = getRailsBaseUrl();
     expect(url).toBe("http://127.0.0.1:3001");
   });
 
   test("returns local default when env is empty string (non-production)", () => {
-    process.env.NODE_ENV = "development";
+    setNodeEnv("development");
     process.env.RAILS_BASE_URL = "";
     const url = getRailsBaseUrl();
     expect(url).toBe("http://127.0.0.1:3001");
   });
 
   test("returns local default when env is whitespace-only (non-production)", () => {
-    process.env.NODE_ENV = "development";
+    setNodeEnv("development");
     process.env.RAILS_BASE_URL = "   ";
     const url = getRailsBaseUrl();
     expect(url).toBe("http://127.0.0.1:3001");
@@ -112,32 +134,88 @@ describe("getRailsBaseUrl", () => {
   // -----------------------------------------------------------------------
 
   test("throws in production when RAILS_BASE_URL is not set", () => {
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     expect(() => getRailsBaseUrl()).toThrow(/RAILS_BASE_URL is required in production/);
   });
 
   test("throws in production when RAILS_BASE_URL is empty string", () => {
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     process.env.RAILS_BASE_URL = "";
     expect(() => getRailsBaseUrl()).toThrow(/RAILS_BASE_URL is required in production/);
   });
 
   test("throws in production when RAILS_BASE_URL is whitespace-only", () => {
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     process.env.RAILS_BASE_URL = "   ";
     expect(() => getRailsBaseUrl()).toThrow(/RAILS_BASE_URL is required in production/);
   });
 
   test("returns valid URL in production when RAILS_BASE_URL is set", () => {
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     process.env.RAILS_BASE_URL = "https://api.render.com";
     expect(getRailsBaseUrl()).toBe("https://api.render.com");
   });
 
   test("throws in production for malformed RAILS_BASE_URL (not missing-URL error)", () => {
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     process.env.RAILS_BASE_URL = "not-a-url";
     expect(() => getRailsBaseUrl()).toThrow(/not a valid URL/);
+  });
+});
+
+describe("getRailsInternalSnapshotCaptureSecret", () => {
+  beforeEach(() => {
+    delete process.env.INTERNAL_SNAPSHOT_CAPTURE_SECRET;
+  });
+
+  afterEach(() => {
+    if (ORIGINAL_CAPTURE_SECRET !== undefined) {
+      process.env.INTERNAL_SNAPSHOT_CAPTURE_SECRET = ORIGINAL_CAPTURE_SECRET;
+    } else {
+      delete process.env.INTERNAL_SNAPSHOT_CAPTURE_SECRET;
+    }
+    setNodeEnv(ORIGINAL_NODE_ENV);
+  });
+
+  test("returns null in test when secret is not set", () => {
+    setNodeEnv("test");
+    expect(getRailsInternalSnapshotCaptureSecret()).toBeNull();
+  });
+
+  test("returns null in development when secret is whitespace-only", () => {
+    setNodeEnv("development");
+    process.env.INTERNAL_SNAPSHOT_CAPTURE_SECRET = "   ";
+    expect(getRailsInternalSnapshotCaptureSecret()).toBeNull();
+  });
+
+  test("returns trimmed secret when configured", () => {
+    setNodeEnv("test");
+    process.env.INTERNAL_SNAPSHOT_CAPTURE_SECRET = "  shared-secret  ";
+    expect(getRailsInternalSnapshotCaptureSecret()).toBe("shared-secret");
+  });
+
+  test("throws in production when secret is not set", () => {
+    setNodeEnv("production");
+    expect(() => getRailsInternalSnapshotCaptureSecret()).toThrow(
+      /INTERNAL_SNAPSHOT_CAPTURE_SECRET is required in production/
+    );
+  });
+
+  test("throws in production when secret is whitespace-only", () => {
+    setNodeEnv("production");
+    process.env.INTERNAL_SNAPSHOT_CAPTURE_SECRET = "   ";
+    expect(() => getRailsInternalSnapshotCaptureSecret()).toThrow(
+      /INTERNAL_SNAPSHOT_CAPTURE_SECRET is required in production/
+    );
+  });
+
+  test("public seam constants remain usable when capture secret is absent outside production", () => {
+    setNodeEnv("test");
+    delete process.env.INTERNAL_SNAPSHOT_CAPTURE_SECRET;
+
+    expect(getRailsBaseUrl()).toBe("http://127.0.0.1:3001");
+    expect(RAILS_SESSION_PATH).toBe("/api/v1/session");
+    expect(getRailsInternalSnapshotCaptureSecret()).toBeNull();
   });
 });
 
@@ -146,8 +224,24 @@ describe("Rails seam constants", () => {
     expect(RAILS_SESSION_PATH).toBe("/api/v1/session");
   });
 
+  test("RAILS_POOL_SNAPSHOT_CAPTURE_PATH_TEMPLATE matches the internal write route contract", () => {
+    expect(RAILS_POOL_SNAPSHOT_CAPTURE_PATH_TEMPLATE).toBe(
+      "/api/v1/pools/:network_id/:pool_address/snapshots/capture"
+    );
+  });
+
+  test("RAILS_INTERNAL_SNAPSHOT_CAPTURE_SECRET_HEADER is dedicated to internal capture", () => {
+    expect(RAILS_INTERNAL_SNAPSHOT_CAPTURE_SECRET_HEADER).toBe(
+      "X-TokenScope-Internal-Capture-Secret"
+    );
+  });
+
   test("RAILS_REQUEST_TIMEOUT_MS is 5000", () => {
     expect(RAILS_REQUEST_TIMEOUT_MS).toBe(5_000);
+  });
+
+  test("RAILS_INTERNAL_WRITE_REQUEST_TIMEOUT_MS is 5000", () => {
+    expect(RAILS_INTERNAL_WRITE_REQUEST_TIMEOUT_MS).toBe(5_000);
   });
 
   test("RAILS_SESSION_COOKIE_NAME is set", () => {
