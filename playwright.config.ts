@@ -21,7 +21,12 @@ export default defineConfig({
   webServer: {
     command: 'npm run build && npm run start -- --hostname 127.0.0.1 --port 3000',
     url: 'http://127.0.0.1:3000',
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     timeout: 120 * 1000,
+    env: {
+      ...process.env,
+      E2E_POOL_DETAIL_HISTORY_SEAM: 'enabled',
+      RAILS_BASE_URL: 'http://127.0.0.1:3001',
+    },
   },
 });
