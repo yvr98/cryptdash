@@ -39,9 +39,13 @@ Create a `.env.local` file:
 ```env
 COINGECKO_API_KEY=your_demo_api_key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+RAILS_BASE_URL=http://127.0.0.1:3001
+INTERNAL_SNAPSHOT_CAPTURE_SECRET=your_shared_capture_secret
 ```
 
 > Get a free API key at [coingecko.com/api](https://www.coingecko.com/en/api). GeckoTerminal's public API requires no key.
+
+`RAILS_BASE_URL` points the Next.js app at the sibling Rails API. `INTERNAL_SNAPSHOT_CAPTURE_SECRET` is optional in local development unless you want live snapshot capture enabled, but production requires it on both the Next.js and Rails deployments with the same value.
 
 ```bash
 npm run dev        # Start dev server
@@ -67,9 +71,16 @@ Local Postgres is configured via `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PG
 |----------|------|
 | Neon | Production Postgres database (connection string stays private) |
 | Render | Rails API host — stores `DATABASE_URL` (Neon connection string) |
-| Vercel | Next.js host — uses `RAILS_BASE_URL` only, never DB credentials |
+| Vercel | Next.js host — uses `RAILS_BASE_URL` and `INTERNAL_SNAPSHOT_CAPTURE_SECRET`, never DB credentials |
 
 Neon Auth is disabled. Create the Neon project manually (no CLI init flows).
+
+Production config contract:
+
+- **Render (Rails)**: `DATABASE_URL`, `INTERNAL_SNAPSHOT_CAPTURE_SECRET`
+- **Vercel (Next.js)**: `RAILS_BASE_URL`, `INTERNAL_SNAPSHOT_CAPTURE_SECRET`
+
+The internal snapshot capture secret must be present on both platforms with the exact same value so Next.js can authenticate internal capture requests and Rails can verify them.
 
 ## How It Works
 
