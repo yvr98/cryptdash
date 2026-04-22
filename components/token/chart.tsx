@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   CandlestickSeries,
   ColorType,
@@ -189,7 +189,7 @@ export function TokenChart({ coinId, market }: TokenChartProps) {
     };
   }, [coinId, market]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const container = chartContainerRef.current;
 
     if (!container || chartState.status !== "ready") {
