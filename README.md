@@ -2,7 +2,7 @@
 
 A multi-chain token research tool that aggregates DEX pool data across Ethereum, Base, Arbitrum, Polygon, and BNB Chain — helping traders quickly identify where a token is most liquid and actively traded.
 
-**[Live Demo →](https://cryptdash.vercel.app)** · **[Try ETH →](https://cryptdash.vercel.app/token/ethereum)**
+**[CryptDash →](https://cryptdash.vercel.app/)**
 
 ---
 
