@@ -8,6 +8,9 @@ import {
   type PoolDetailPageDataSideEffects,
 } from "@/lib/page-data/pool-detail";
 import { buildPoolMetadata } from "@/lib/page-data/metadata";
+
+export const dynamic = "force-dynamic";
+
 type PoolDetailPageProps = {
   params: Promise<{
     network: string;
