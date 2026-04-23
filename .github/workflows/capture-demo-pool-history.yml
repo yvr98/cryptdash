@@ -1,0 +1,27 @@
+name: Capture Demo Pool History
+
+on:
+  schedule:
+    - cron: '5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  capture-demo-pool-history:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Capture canonical demo pool snapshot
+        env:
+          RAILS_BASE_URL: ${{ secrets.RAILS_BASE_URL }}
+          INTERNAL_SNAPSHOT_CAPTURE_SECRET: ${{ secrets.INTERNAL_SNAPSHOT_CAPTURE_SECRET }}
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+        run: node scripts/capture-demo-pool-history.mjs
