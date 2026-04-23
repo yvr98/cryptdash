@@ -15,6 +15,7 @@ jobs:
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       backend: ${{ steps.filter.outputs.backend }}
+      deploy_control_plane: ${{ steps.filter.outputs.deploy_control_plane }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -41,6 +42,10 @@ jobs:
               - 'vercel.json'
             backend:
               - 'rails/**'
+              - 'render.yaml'
+            deploy_control_plane:
+              - '.github/workflows/ci.yml'
+              - 'vercel.json'
               - 'render.yaml'
 
   test-and-build:
@@ -72,7 +77,7 @@ jobs:
     needs:
       - changes
       - test-and-build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.changes.outputs.frontend == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.deploy_control_plane == 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -108,7 +113,7 @@ jobs:
     needs:
       - changes
       - test-and-build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.changes.outputs.backend == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.deploy_control_plane == 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: read
