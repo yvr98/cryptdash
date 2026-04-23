@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Token Detail Route Handler
+// CryptDash — Token Detail Route Handler
 // =============================================================================
 //
 // GET /api/token/[coinId]

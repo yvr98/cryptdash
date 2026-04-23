@@ -1,8 +1,8 @@
-# TokenScope
+# CryptDash
 
 A multi-chain token research tool that aggregates DEX pool data across Ethereum, Base, Arbitrum, Polygon, and BNB Chain — helping traders quickly identify where a token is most liquid and actively traded.
 
-**[Live Demo →](https://tokenscope-rl.vercel.app)** · **[Try ETH →](https://tokenscope-rl.vercel.app/token/ethereum)**
+**[Live Demo →](https://cryptdash.vercel.app)** · **[Try ETH →](https://cryptdash.vercel.app/token/ethereum)**
 
 ---
 
@@ -30,7 +30,7 @@ A multi-chain token research tool that aggregates DEX pool data across Ethereum,
 ## Getting Started
 
 ```bash
-git clone https://github.com/yvr98/tokenscope.git && cd tokenscope
+git clone https://github.com/yvr98/cryptdash.git && cd cryptdash
 npm install
 ```
 

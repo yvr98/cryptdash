@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Route Model Constants
+// CryptDash — Route Model Constants
 // =============================================================================
 //
 // The route model determines how the app identifies and navigates to tokens.

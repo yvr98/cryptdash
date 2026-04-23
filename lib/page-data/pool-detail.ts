@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pool Detail Page Data
+// CryptDash — Pool Detail Page Data
 // =============================================================================
 //
 // Server-side page model for /pool/[network]/[poolAddress].

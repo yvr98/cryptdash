@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Token Detail Shell Component Tests
+// CryptDash — Token Detail Shell Component Tests
 // =============================================================================
 //
 // Focused component tests for TokenDetailShell:

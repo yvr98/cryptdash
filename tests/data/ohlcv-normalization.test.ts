@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — OHLCV Normalization Test
+// CryptDash — OHLCV Normalization Test
 // =============================================================================
 //
 // Spec name (from plan): "normalizes GeckoTerminal OHLCV payload strings into numeric candles"

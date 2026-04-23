@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Fixture Index
+// CryptDash — Fixture Index
 // =============================================================================
 //
 // Re-exports all fixtures from a single entry point.

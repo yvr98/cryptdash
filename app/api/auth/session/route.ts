@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Auth Session Route Handler
+// CryptDash — Auth Session Route Handler
 // =============================================================================
 //
 // GET /api/auth/session

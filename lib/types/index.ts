@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Shared Type Definitions
+// CryptDash — Shared Type Definitions
 // =============================================================================
 //
 // Canonical identity: CoinGecko coin ID.

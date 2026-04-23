@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Supported Chains Contract Test
+// CryptDash — Supported Chains Contract Test
 // =============================================================================
 
 import { describe, it, expect } from "vitest";

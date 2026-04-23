@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — CoinGecko Upstream Adapter
+// CryptDash — CoinGecko Upstream Adapter
 // =============================================================================
 //
 // Server-side adapter for CoinGecko search and token metadata.

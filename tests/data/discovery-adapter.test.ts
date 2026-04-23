@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Discovery Adapter Test
+// CryptDash — Discovery Adapter Test
 // =============================================================================
 //
 // Tests that the GeckoTerminal trending-pools adapter boundary correctly:

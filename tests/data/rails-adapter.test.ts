@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Rails Session Adapter Tests
+// CryptDash — Rails Session Adapter Tests
 // =============================================================================
 //
 // Spec: "happy path, missing env, timeout, connection failure, Rails non-200/5xx,

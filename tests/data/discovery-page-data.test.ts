@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Discovery Page Data Tests
+// CryptDash — Discovery Page Data Tests
 // =============================================================================
 //
 // Tests the discovery shaping helpers in lib/page-data/discovery.ts:
@@ -601,7 +601,7 @@ describe("getDiscoveryPageData — explanatory copy contract", () => {
     expect(result.copy).toEqual({
       title: "Explore trending pools across supported chains",
       description:
-        "Discovery order is upstream-ranked. TokenScope keeps the original feed order, filters it to supported chains, and shows the latest available liquidity, volume, activity, and freshness signals.",
+        "Discovery order is upstream-ranked. CryptDash keeps the original feed order, filters it to supported chains, and shows the latest available liquidity, volume, activity, and freshness signals.",
     });
   });
 
@@ -634,7 +634,7 @@ describe("getDiscoveryPageData — explanatory copy contract", () => {
 
     expect(result.rows).toEqual([]);
     expect(result.copy.title).toBe("No supported-chain pools in this snapshot");
-    expect(result.copy.description).toContain("none mapped to TokenScope's supported chains");
+    expect(result.copy.description).toContain("none mapped to CryptDash's supported chains");
   });
 
   it("returns partially-unavailable copy when rows exist but upstream errored", async () => {

@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Token Route Metadata Test
+// CryptDash — Token Route Metadata Test
 // =============================================================================
 //
 // Tests the bounded metadata contract for /token/[coinId]:

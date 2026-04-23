@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const STORAGE_KEY = "tokenscope_watchlist";
+const STORAGE_KEY = "cryptdash_watchlist";
 
 test.describe("Watchlist persistence", () => {
   test("adding a token to watchlist persists after page reload", async ({

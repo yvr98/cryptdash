@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Recommendation Engine
+// CryptDash — Recommendation Engine
 // =============================================================================
 //
 // Given a set of eligible pool candidates, produces a deterministic
@@ -84,7 +84,7 @@ function buildRationale(
 ): string {
   switch (status) {
     case "insufficient_data":
-      return "No eligible pools with sufficient data are available across supported chains. TokenScope withholds a suggestion until at least two pools meet the minimum liquidity, volume, and activity thresholds.";
+      return "No eligible pools with sufficient data are available across supported chains. CryptDash withholds a suggestion until at least two pools meet the minimum liquidity, volume, and activity thresholds.";
     case "comparison_unavailable":
       return `Only ${eligibleCount} eligible pool was found across supported chains. A comparison requires at least two eligible pools to produce a meaningful suggestion.`;
     case "near_tie":

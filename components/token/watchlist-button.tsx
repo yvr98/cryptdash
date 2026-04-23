@@ -1,7 +1,7 @@
 "use client";
 
 // =============================================================================
-// TokenScope — Watchlist Add/Remove Button
+// CryptDash — Watchlist Add/Remove Button
 // =============================================================================
 //
 // Client component rendered inside the server-side token detail shell.

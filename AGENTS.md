@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
 ## OVERVIEW
-TokenScope is a focused Next.js App Router app for multi-chain token research, with a sibling Rails API backend under `rails/`. Canonical identity is always the CoinGecko `coinId`; GeckoTerminal supplies pools and OHLCV.
+CryptDash is a focused Next.js App Router app for multi-chain token research, with a sibling Rails API backend under `rails/`. Canonical identity is always the CoinGecko `coinId`; GeckoTerminal supplies pools and OHLCV.
 
 ## STRUCTURE
 ```text

@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Low-Data / Degraded-State E2E Test
+// CryptDash — Low-Data / Degraded-State E2E Test
 // =============================================================================
 //
 // Verifies that the app shows stable degraded/withheld states instead of
@@ -22,7 +22,7 @@ const RATE_LIMITED_HTML = `
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>TokenScope — Degraded State: Rate Limited</title>
+  <title>CryptDash — Degraded State: Rate Limited</title>
   <style>
     body { font-family: sans-serif; margin: 2rem; }
     .section { border: 1px solid #ddd; border-radius: 2rem; padding: 1.5rem; margin: 1rem 0; }
@@ -42,7 +42,7 @@ const RATE_LIMITED_HTML = `
         The upstream data provider is rate-limiting requests. Some data may be temporarily incomplete. Please try again in a moment.
       </p>
       <p>
-        TokenScope is showing the data that is available and withholding any
+        CryptDash is showing the data that is available and withholding any
         suggestion that depends on missing upstream data. Try refreshing in a moment.
       </p>
     </section>
@@ -54,7 +54,7 @@ const RATE_LIMITED_HTML = `
       </div>
       <h2 data-testid="recommendation-heading">Pool data unavailable</h2>
       <p data-testid="recommendation-rationale">
-        Pool data could not be loaded from one or more upstream providers. TokenScope withholds a suggestion until the data is available. Try refreshing in a moment.
+        Pool data could not be loaded from one or more upstream providers. CryptDash withholds a suggestion until the data is available. Try refreshing in a moment.
       </p>
       <p data-testid="disclaimer">
         This is a deterministic suggestion based on current pool metrics,
@@ -69,7 +69,7 @@ const RATE_LIMITED_HTML = `
       <h2>No eligible pools</h2>
       <p>
         No pools on supported chains currently meet the eligibility
-        thresholds. TokenScope only shows pools with sufficient liquidity,
+        thresholds. CryptDash only shows pools with sufficient liquidity,
         volume, and activity to support a meaningful comparison.
       </p>
     </section>
@@ -83,7 +83,7 @@ const SERVER_ERROR_HTML = `
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>TokenScope — Degraded State: Server Error</title>
+  <title>CryptDash — Degraded State: Server Error</title>
   <style>
     body { font-family: sans-serif; margin: 2rem; }
     .section { border: 1px solid #ddd; border-radius: 2rem; padding: 1.5rem; margin: 1rem 0; }
@@ -103,7 +103,7 @@ const SERVER_ERROR_HTML = `
         The upstream data provider returned an error. Pool and market data may be temporarily unavailable.
       </p>
       <p>
-        TokenScope is showing the data that is available and withholding any
+        CryptDash is showing the data that is available and withholding any
         suggestion that depends on missing upstream data. Try refreshing in a moment.
       </p>
     </section>
@@ -115,7 +115,7 @@ const SERVER_ERROR_HTML = `
       </div>
       <h2 data-testid="recommendation-heading">Pool data unavailable</h2>
       <p data-testid="recommendation-rationale">
-        Pool data could not be loaded from one or more upstream providers. TokenScope withholds a suggestion until the data is available. Try refreshing in a moment.
+        Pool data could not be loaded from one or more upstream providers. CryptDash withholds a suggestion until the data is available. Try refreshing in a moment.
       </p>
     </section>
 

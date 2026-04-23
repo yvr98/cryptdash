@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pool/OHLCV Upstream Adapter
+// CryptDash — Pool/OHLCV Upstream Adapter
 // =============================================================================
 //
 // Server-side adapter for pool and OHLCV data.

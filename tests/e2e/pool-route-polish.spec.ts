@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pool Route Polish E2E Test
+// CryptDash — Pool Route Polish E2E Test
 // =============================================================================
 //
 // Focused Playwright spec proving pool route polish:
@@ -76,10 +76,10 @@ test.describe("Pool route polish — happy path", () => {
     ).toBeVisible();
 
     // Route-level metadata: generateMetadata produces a title containing
-    // the pool subtitle marker (" — TokenScope Pool"). This proves the
+    // the pool subtitle marker (" — CryptDash Pool"). This proves the
     // pool route export path generates real metadata, not just the layout.
     const title = await page.title();
-    expect(title).toContain("TokenScope Pool");
+    expect(title).toContain("CryptDash Pool");
   });
 });
 test.describe("Pool route polish — not-found reuse", () => {

@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Upstream Error Handling Test
+// CryptDash — Upstream Error Handling Test
 // =============================================================================
 //
 // Spec name (from plan): "maps upstream 429 and 500 responses into stable UI states"

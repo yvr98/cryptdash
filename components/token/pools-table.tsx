@@ -1,7 +1,7 @@
 "use client";
 
 // =============================================================================
-// TokenScope — Pools Table
+// CryptDash — Pools Table
 // =============================================================================
 //
 // Data-dense pool comparison table with chain badges, green/red price

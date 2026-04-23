@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pool Eligibility Filter
+// CryptDash — Pool Eligibility Filter
 // =============================================================================
 //
 // Deterministic eligibility gating for the recommendation engine.

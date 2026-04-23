@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Token Detail Page Data
+// CryptDash — Token Detail Page Data
 // =============================================================================
 //
 // Server-side page model for /token/[coinId].

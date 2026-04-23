@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Auth Session Route Tests
+// CryptDash — Auth Session Route Tests
 // =============================================================================
 //
 // Covers: happy path mapping, degraded behavior, cookie forwarding policy,

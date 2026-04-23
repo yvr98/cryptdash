@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const DEPLOYED_ETH_URL =
-  process.env.DEPLOYED_ETH_URL ?? "https://tokenscope-rl.vercel.app/token/ethereum";
+  process.env.DEPLOYED_ETH_URL ?? "https://cryptdash.vercel.app/token/ethereum";
 
 test.describe("Deployed ETH deep-link flow", () => {
   test("ETH token page loads and shows the core token research flow", async ({

@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Rails Session Upstream Adapter
+// CryptDash — Rails Session Upstream Adapter
 // =============================================================================
 //
 // Server-side adapter for the Rails session-status seam.

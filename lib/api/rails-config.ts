@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Rails Seam Configuration
+// CryptDash — Rails Seam Configuration
 // =============================================================================
 //
 // Centralized, server-only module for the Next.js ↔ Rails seam.
@@ -94,7 +94,7 @@ export const RAILS_SESSION_PATH = "/api/v1/session" as const;
 
 /** Rails-side header used only for the internal pool snapshot capture seam. */
 export const RAILS_INTERNAL_SNAPSHOT_CAPTURE_SECRET_HEADER =
-  "X-TokenScope-Internal-Capture-Secret" as const;
+  "X-CryptDash-Internal-Capture-Secret" as const;
 
 /** Rails-side path template for the internal pool snapshot capture seam. */
 export const RAILS_POOL_SNAPSHOT_CAPTURE_PATH_TEMPLATE =
@@ -154,7 +154,7 @@ export const RAILS_INTERNAL_WRITE_REQUEST_TIMEOUT_MS = 5_000 as const;
  * Name of the session cookie set by the Rails app.
  * Used when forwarding cookies between Next.js and Rails.
  */
-export const RAILS_SESSION_COOKIE_NAME = "_tokenscope_rails_session" as const;
+export const RAILS_SESSION_COOKIE_NAME = "_cryptdash_rails_session" as const;
 
 /**
  * Whether the seam should forward cookies from the browser request

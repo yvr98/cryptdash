@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Page Data Test
+// CryptDash — Page Data Test
 // =============================================================================
 //
 // Tests the server-side token detail page model that powers /token/[coinId].
@@ -146,7 +146,7 @@ describe("buildTokenMetadata", () => {
       symbol: "eth",
     });
 
-    expect(meta.title).toBe("Ethereum (ETH) — TokenScope");
+    expect(meta.title).toBe("Ethereum (ETH) — CryptDash");
     expect(meta.description).toContain("Ethereum");
     expect(meta.openGraph?.title).toBe(meta.title);
     expect(meta.openGraph?.description).toBe(meta.description);
@@ -173,7 +173,7 @@ describe("buildTokenMetadata", () => {
       symbol: "",
     });
 
-    expect(meta.title).toBe("Test Token — TokenScope");
+    expect(meta.title).toBe("Test Token — CryptDash");
     expect(meta.title).not.toContain("()");
   });
 

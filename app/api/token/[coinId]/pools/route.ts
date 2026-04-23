@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pools Route Handler
+// CryptDash — Pools Route Handler
 // =============================================================================
 //
 // GET /api/token/[coinId]/pools?network=<network>&address=<contractAddress>

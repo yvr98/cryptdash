@@ -7,7 +7,7 @@ import {
   removeFromWatchlist,
 } from "@/lib/watchlist/storage";
 
-const STORAGE_KEY = "tokenscope_watchlist";
+const STORAGE_KEY = "cryptdash_watchlist";
 
 function mockLocalStorage() {
   const store: Record<string, string> = {};

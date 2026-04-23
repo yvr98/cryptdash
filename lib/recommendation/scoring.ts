@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pool Scoring Engine
+// CryptDash — Pool Scoring Engine
 // =============================================================================
 //
 // Deterministic scoring of eligible pool candidates.

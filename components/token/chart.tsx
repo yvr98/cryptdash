@@ -35,7 +35,7 @@ const CHART_TIMEFRAME = "hour";
 const CHART_LIMIT = 168;
 const FETCH_TIMEOUT_MS = 15_000;
   const NO_MARKET_MESSAGE =
-  "No eligible supported-chain market is available yet, so TokenScope cannot draw an hourly chart.";
+  "No eligible supported-chain market is available yet, so CryptDash cannot draw an hourly chart.";
   const ERROR_CHART_MESSAGE =
   "Chart data is temporarily unavailable for this market. Try again in a moment.";
 function formatUsd(value: number) {

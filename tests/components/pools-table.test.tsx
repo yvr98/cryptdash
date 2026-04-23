@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pools Table Rendering Test
+// CryptDash — Pools Table Rendering Test
 // =============================================================================
 //
 // Deterministic component-level proof that:

@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Route Metadata Helpers
+// CryptDash — Route Metadata Helpers
 // =============================================================================
 //
 // Bounded metadata contract for token and pool route pages.
@@ -20,7 +20,7 @@ import { buildTokenPath, buildPoolPath } from "@/lib/constants/route";
 // ---------------------------------------------------------------------------
 
 function getAppUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL || "https://tokenscope-rl.vercel.app";
+  return process.env.NEXT_PUBLIC_APP_URL || "https://cryptdash.vercel.app";
 }
 
 // ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ export function buildTokenMetadata(input: TokenMetadataInput): Metadata {
       : input.coinId;
   const symbolSuffix = input.symbol ? ` (${input.symbol.toUpperCase()})` : "";
 
-  const title = `${displayName}${symbolSuffix} — TokenScope`;
+  const title = `${displayName}${symbolSuffix} — CryptDash`;
   const description = `Multi-chain pool comparison, liquidity, and trading data for ${displayName}.`;
 
   return {
@@ -89,7 +89,7 @@ export function buildPoolMetadata(input: PoolMetadataInput): Metadata {
   const dexPart = input.dexName ? ` on ${input.dexName}` : "";
   const titleSuffix = `${pairPart}${dexPart}`;
 
-  const title = `${titleSuffix} — TokenScope Pool`;
+  const title = `${titleSuffix} — CryptDash Pool`;
   const description = `Pool details, liquidity, and trading activity for ${pairPart} on ${input.network}.`;
 
   return {

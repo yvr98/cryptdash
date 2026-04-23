@@ -29,7 +29,7 @@ describe("Navbar", () => {
 
     expect(
       screen.getByRole("link", {
-        name: /tokenscope/i,
+        name: /cryptdash/i,
       })
     ).toHaveAttribute("href", "/");
 

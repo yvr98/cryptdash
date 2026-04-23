@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Search / Typeahead Route Handler
+// CryptDash — Search / Typeahead Route Handler
 // =============================================================================
 //
 // GET /api/search?q=<query>

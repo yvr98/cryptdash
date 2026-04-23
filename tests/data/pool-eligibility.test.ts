@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pool Eligibility Test
+// CryptDash — Pool Eligibility Test
 // =============================================================================
 //
 // Spec name (from plan): "filters out pools that fail v1 eligibility thresholds"

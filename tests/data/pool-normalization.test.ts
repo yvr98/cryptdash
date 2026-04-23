@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pool Normalization Test
+// CryptDash — Pool Normalization Test
 // =============================================================================
 //
 // Tests that the GeckoTerminal adapter boundary correctly parses pool

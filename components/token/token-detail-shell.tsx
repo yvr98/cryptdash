@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Token Detail Shell
+// CryptDash — Token Detail Shell
 // =============================================================================
 //
 // Presentational shell for the /token/[coinId] page.

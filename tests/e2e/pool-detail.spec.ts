@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pool Detail Page E2E Test
+// CryptDash — Pool Detail Page E2E Test
 // =============================================================================
 //
 // Verifies real navigation paths into and out of pool detail pages.

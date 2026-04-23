@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TokenScope",
+  title: "CryptDash",
   description: "Find where a token is most liquid and actively traded across chains.",
 };
 

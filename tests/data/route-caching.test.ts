@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Route Caching Test
+// CryptDash — Route Caching Test
 // =============================================================================
 //
 // Verifies that route handlers export correct revalidation values and

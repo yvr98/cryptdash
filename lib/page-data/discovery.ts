@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Discovery Page Data Shaping
+// CryptDash — Discovery Page Data Shaping
 // =============================================================================
 //
 // Pure shaping logic for the discovery page model. Takes TrendingPoolRow[]
@@ -334,7 +334,7 @@ function computeExplanatoryCopy(
       return {
         title: "No supported-chain pools in this snapshot",
         description:
-          "Upstream discovery returned pools, but none mapped to TokenScope's supported chains.",
+          "Upstream discovery returned pools, but none mapped to CryptDash's supported chains.",
       };
     }
     return {
@@ -347,7 +347,7 @@ function computeExplanatoryCopy(
   return {
     title: "Explore trending pools across supported chains",
     description:
-      "Discovery order is upstream-ranked. TokenScope keeps the original feed order, filters it to supported chains, and shows the latest available liquidity, volume, activity, and freshness signals.",
+      "Discovery order is upstream-ranked. CryptDash keeps the original feed order, filters it to supported chains, and shows the latest available liquidity, volume, activity, and freshness signals.",
   };
 }
 

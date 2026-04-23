@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — CoinGecko Onchain Raw Pool Fixtures
+// CryptDash — CoinGecko Onchain Raw Pool Fixtures
 // =============================================================================
 //
 // Deterministic fixture data for pool normalization tests.

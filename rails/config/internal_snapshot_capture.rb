@@ -1,6 +1,6 @@
 module InternalSnapshotCaptureConfig
   SECRET_ENV_KEY = "INTERNAL_SNAPSHOT_CAPTURE_SECRET".freeze
-  SECRET_HEADER = "X-TokenScope-Internal-Capture-Secret".freeze
+  SECRET_HEADER = "X-CryptDash-Internal-Capture-Secret".freeze
   PATH_TEMPLATE = "/api/v1/pools/:network_id/:pool_address/snapshots/capture".freeze
 
   module_function

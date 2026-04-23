@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Recommendation Card
+// CryptDash — Recommendation Card
 // =============================================================================
 //
 // Transparent, deterministic recommendation card. Shows status, confidence,

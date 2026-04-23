@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Watchlist Storage (localStorage)
+// CryptDash — Watchlist Storage (localStorage)
 // =============================================================================
 //
 // Centralised localStorage abstraction for the watchlist.
@@ -12,8 +12,8 @@
 
 import type { WatchlistEntry } from "@/lib/types";
 
-const STORAGE_KEY = "tokenscope_watchlist";
-const WATCHLIST_EVENT = "tokenscope:watchlist-updated";
+const STORAGE_KEY = "cryptdash_watchlist";
+const WATCHLIST_EVENT = "cryptdash:watchlist-updated";
 
 // Module-level snapshot cache for referential stability.
 // useSyncExternalStore requires getSnapshot to return the same reference

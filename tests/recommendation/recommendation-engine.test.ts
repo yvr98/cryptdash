@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Recommendation Engine Test
+// CryptDash — Recommendation Engine Test
 // =============================================================================
 //
 // Spec name (from plan): "returns clear winner for deterministic fixture"

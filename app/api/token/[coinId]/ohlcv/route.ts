@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — OHLCV Route Handler
+// CryptDash — OHLCV Route Handler
 // =============================================================================
 //
 // GET /api/token/[coinId]/ohlcv?network=<network>&pool=<poolAddress>

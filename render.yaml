@@ -1,4 +1,4 @@
-# Render Blueprint — TokenScope Rails API.
+# Render Blueprint — CryptDash Rails API.
 #
 # Single web service rooted in rails/. Neon provides production PostgreSQL;
 # set DATABASE_URL to the Neon connection string via the Render dashboard.
@@ -7,7 +7,7 @@
 
 services:
   - type: web
-    name: tokenscope-api
+    name: cryptdash-api
     runtime: ruby
     rootDir: rails
     buildCommand: bundle install && bin/rails db:prepare

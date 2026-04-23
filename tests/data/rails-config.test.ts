@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Rails Seam Config Tests
+// CryptDash — Rails Seam Config Tests
 // =============================================================================
 //
 // Spec: "valid, missing, malformed RAILS_BASE_URL env behavior + production guard"
@@ -232,7 +232,7 @@ describe("Rails seam constants", () => {
 
   test("RAILS_INTERNAL_SNAPSHOT_CAPTURE_SECRET_HEADER is dedicated to internal capture", () => {
     expect(RAILS_INTERNAL_SNAPSHOT_CAPTURE_SECRET_HEADER).toBe(
-      "X-TokenScope-Internal-Capture-Secret"
+      "X-CryptDash-Internal-Capture-Secret"
     );
   });
 
@@ -245,7 +245,7 @@ describe("Rails seam constants", () => {
   });
 
   test("RAILS_SESSION_COOKIE_NAME is set", () => {
-    expect(RAILS_SESSION_COOKIE_NAME).toBe("_tokenscope_rails_session");
+    expect(RAILS_SESSION_COOKIE_NAME).toBe("_cryptdash_rails_session");
   });
 
   test("RAILS_COOKIE_FORWARDING_ENABLED is true", () => {

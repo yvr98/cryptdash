@@ -1,7 +1,7 @@
 "use client";
 
 // =============================================================================
-// TokenScope — Navbar
+// CryptDash — Navbar
 // =============================================================================
 //
 // Persistent top navigation bar visible on every page.
@@ -143,7 +143,7 @@ export function Navbar() {
             T
           </div>
           <span className="hidden text-base font-bold tracking-tight text-[color:var(--foreground)] sm:inline">
-            TokenScope
+            CryptDash
           </span>
         </Link>
 

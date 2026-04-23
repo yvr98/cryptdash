@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Discovery Page E2E Test
+// CryptDash — Discovery Page E2E Test
 // =============================================================================
 //
 // Verifies the real /discover route under deterministic happy, empty, and
@@ -116,7 +116,7 @@ test.describe("Discovery page — real route", () => {
       })
     ).toBeVisible();
     await expect(
-      page.getByText(/none mapped to TokenScope's supported chains/)
+      page.getByText(/none mapped to CryptDash's supported chains/)
     ).toBeVisible();
 
     // No table or row data is fabricated

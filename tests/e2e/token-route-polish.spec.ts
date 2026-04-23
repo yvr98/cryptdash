@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Token Route Polish E2E Test
+// CryptDash — Token Route Polish E2E Test
 // =============================================================================
 //
 // Focused Playwright spec proving token route polish:

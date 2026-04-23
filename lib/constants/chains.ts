@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Supported Chain Definitions
+// CryptDash — Supported Chain Definitions
 // =============================================================================
 //
 // Supported chains: Ethereum, Base, Arbitrum, Polygon, BNB Chain

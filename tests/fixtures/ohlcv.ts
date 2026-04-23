@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — OHLCV Candle Fixtures
+// CryptDash — OHLCV Candle Fixtures
 // =============================================================================
 //
 // Deterministic fixture data for OHLCV normalization and chart tests.

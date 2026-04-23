@@ -110,7 +110,7 @@ async function captureSnapshot(metrics) {
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
-      "X-TokenScope-Internal-Capture-Secret": captureSecret,
+      "X-CryptDash-Internal-Capture-Secret": captureSecret,
     },
     body: JSON.stringify({
       liquidity_usd: metrics.liquidityUsd,

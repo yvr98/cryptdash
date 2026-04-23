@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Near Tie E2E Test
+// CryptDash — Near Tie E2E Test
 // =============================================================================
 //
 // Spec name (from plan): "near tie recommendation surfaces close alternatives"
@@ -20,7 +20,7 @@ const NEAR_TIE_HTML = `
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>TokenScope — Near Tie Test</title>
+  <title>CryptDash — Near Tie Test</title>
   <style>
     body { font-family: sans-serif; margin: 2rem; }
     .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; border: 1px solid; font-size: 0.75rem; }

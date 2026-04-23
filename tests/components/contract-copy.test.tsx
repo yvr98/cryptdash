@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Contract Copy Button Tests
+// CryptDash — Contract Copy Button Tests
 // =============================================================================
 //
 // Focused component tests for the ContractCopyButton and its integration

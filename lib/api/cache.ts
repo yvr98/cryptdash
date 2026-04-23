@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Shared Cache & Response Utilities
+// CryptDash — Shared Cache & Response Utilities
 // =============================================================================
 //
 // Centralized cache policy for all route handlers.

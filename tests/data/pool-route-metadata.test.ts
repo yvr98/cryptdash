@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pool Route Metadata Integration Tests
+// CryptDash — Pool Route Metadata Integration Tests
 // =============================================================================
 //
 // Tests the route-level generateMetadata function exported from
@@ -156,7 +156,7 @@ describe("pool route generateMetadata", () => {
 
     const canonical = meta.alternates?.canonical as string;
     expect(canonical).toBe(
-      `https://tokenscope-rl.vercel.app/pool/base/${SAMPLE_ADDRESS}`,
+      `https://cryptdash.vercel.app/pool/base/${SAMPLE_ADDRESS}`,
     );
   });
 

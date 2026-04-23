@@ -14,7 +14,7 @@ class InternalSnapshotCaptureConfigTest < ActiveSupport::TestCase
   end
 
   test "exposes the dedicated internal capture header contract" do
-    assert_equal "X-TokenScope-Internal-Capture-Secret", InternalSnapshotCaptureConfig::SECRET_HEADER
+    assert_equal "X-CryptDash-Internal-Capture-Secret", InternalSnapshotCaptureConfig::SECRET_HEADER
     assert_equal "/api/v1/pools/:network_id/:pool_address/snapshots/capture", InternalSnapshotCaptureConfig::PATH_TEMPLATE
   end
 

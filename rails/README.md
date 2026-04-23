@@ -1,6 +1,6 @@
-# TokenScope API Backend
+# CryptDash API Backend
 
-Rails 8.1 API backend for [TokenScope](../README.md). Ruby 3.3.11, PostgreSQL.
+Rails 8.1 API backend for [CryptDash](../README.md). Ruby 3.3.11, PostgreSQL.
 
 ## Prerequisites
 
@@ -43,6 +43,6 @@ Production uses Neon-managed PostgreSQL. Render hosts this Rails app and stores 
 For the internal pool snapshot capture seam, production also requires `INTERNAL_SNAPSHOT_CAPTURE_SECRET` on both sides:
 
 - **Render (Rails)** reads it to authorize `POST /api/v1/pools/:network_id/:pool_address/snapshots/capture`
-- **Vercel (Next.js)** reads the same value to send `X-TokenScope-Internal-Capture-Secret`
+- **Vercel (Next.js)** reads the same value to send `X-CryptDash-Internal-Capture-Secret`
 
 Use the exact same secret value in both deployments.

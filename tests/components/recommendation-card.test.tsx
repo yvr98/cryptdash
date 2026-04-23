@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Recommendation Card Component Test
+// CryptDash — Recommendation Card Component Test
 // =============================================================================
 //
 // Deterministic component tests for the RecommendationCard covering all

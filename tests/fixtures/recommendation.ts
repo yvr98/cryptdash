@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pool Candidate Fixtures
+// CryptDash — Pool Candidate Fixtures
 // =============================================================================
 //
 // Deterministic fixture data for recommendation engine tests.

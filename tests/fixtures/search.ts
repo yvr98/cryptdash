@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Search Result Fixtures
+// CryptDash — Search Result Fixtures
 // =============================================================================
 //
 // Deterministic fixture data for search-related tests.

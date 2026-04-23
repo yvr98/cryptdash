@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Chart Data Test
+// CryptDash — Chart Data Test
 // =============================================================================
 //
 // Spec name (from plan): "returns fallback chart state for empty ohlcv response"

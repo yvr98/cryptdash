@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Upstream Error Classification
+// CryptDash — Upstream Error Classification
 // =============================================================================
 //
 // Centralized error model for all upstream API failures.
@@ -50,7 +50,7 @@ export function userFacingMessage(category: UpstreamErrorCategory): string {
     case "server_error":
       return "The upstream data provider returned an error. Pool and market data may be temporarily unavailable.";
     case "not_found":
-      return "The requested resource was not found upstream. TokenScope cannot display data for this token.";
+      return "The requested resource was not found upstream. CryptDash cannot display data for this token.";
     case "timeout":
       return "The upstream data provider did not respond in time. Some data may be temporarily incomplete.";
     case "malformed":

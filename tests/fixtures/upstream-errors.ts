@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Upstream Error Fixtures
+// CryptDash — Upstream Error Fixtures
 // =============================================================================
 //
 // Deterministic fixture data for resilience/error-handling tests.

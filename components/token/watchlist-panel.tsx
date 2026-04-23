@@ -1,7 +1,7 @@
 "use client";
 
 // =============================================================================
-// TokenScope — Watchlist Panel
+// CryptDash — Watchlist Panel
 // =============================================================================
 
 import Image from "next/image";

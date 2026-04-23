@@ -1,5 +1,5 @@
 // =============================================================================
-// TokenScope — Pool Detail Page Data Tests
+// CryptDash — Pool Detail Page Data Tests
 // =============================================================================
 //
 // Tests the server-side pool detail page model that powers
