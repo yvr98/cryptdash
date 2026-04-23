@@ -19,6 +19,8 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
+      - key: INTERNAL_SNAPSHOT_CAPTURE_SECRET
+        sync: false
       - key: RAILS_ENV
         value: production
       - key: SECRET_KEY_BASE
