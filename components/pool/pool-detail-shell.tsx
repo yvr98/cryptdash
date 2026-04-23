@@ -1,9 +1,14 @@
 import Link from "next/link";
 
 import { HistoryMetricCard } from "@/components/pool/history-metric-card";
-import { getChainDef } from "@/lib/constants";
+import { buildPoolPath, getChainDef } from "@/lib/constants";
 import type { PoolDetailPageData } from "@/lib/page-data/pool-detail";
 import type { FreshnessBucket } from "@/lib/page-data/discovery";
+
+const MARKET_HISTORY_DEMO_PATH = buildPoolPath(
+  "base",
+  "0x6c561b446416e1a00e8e93e221854d6ea4171372"
+);
 
 type PoolDetailShellProps = {
   data: PoolDetailPageData;
@@ -211,15 +216,31 @@ export function PoolDetailShell({ data }: PoolDetailShellProps) {
           </p>
 
           {data.history.state === "sparse" && (
-            <p className="mt-2 text-sm text-[color:var(--muted)]">
-              History is still building for this pool. Check back after more snapshots are collected.
-            </p>
+            <div className="mt-2 space-y-2">
+              <p className="text-sm text-[color:var(--muted)]">
+                History is still building for this pool. Check back after more snapshots are collected.
+              </p>
+              <Link
+                href={MARKET_HISTORY_DEMO_PATH}
+                className="inline-flex text-sm font-medium text-[color:var(--accent)] transition hover:opacity-80"
+              >
+                See a fully-built market history example →
+              </Link>
+            </div>
           )}
 
           {data.history.state === "unavailable" && (
-            <p className="mt-2 text-sm text-[color:var(--muted)]">
-              Stored history is temporarily unavailable for this pool. Try refreshing in a moment.
-            </p>
+            <div className="mt-2 space-y-2">
+              <p className="text-sm text-[color:var(--muted)]">
+                Stored history is temporarily unavailable for this pool. Try refreshing in a moment.
+              </p>
+              <Link
+                href={MARKET_HISTORY_DEMO_PATH}
+                className="inline-flex text-sm font-medium text-[color:var(--accent)] transition hover:opacity-80"
+              >
+                See a fully-built market history example →
+              </Link>
+            </div>
           )}
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

@@ -5,11 +5,15 @@ import type { ComponentProps } from "react";
 import { useState } from "react";
 
 import { SUPPORTED_CHAIN_LIST } from "@/lib/constants/chains";
-import { buildTokenPath } from "@/lib/constants";
+import { buildPoolPath, buildTokenPath } from "@/lib/constants";
 import type { SearchResult } from "@/lib/types";
 
 const ETHEREUM_COIN_ID = "ethereum";
 const ETHEREUM_PATH = buildTokenPath(ETHEREUM_COIN_ID);
+const MARKET_HISTORY_DEMO_PATH = buildPoolPath(
+  "base",
+  "0x6c561b446416e1a00e8e93e221854d6ea4171372"
+);
 const CONTRACT_ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/;
 
 type HeroSearchKeyEvent = Parameters<NonNullable<ComponentProps<"input">["onKeyDown"]>>[0];
@@ -245,6 +249,12 @@ export function HomeSearchHero() {
                   className="inline-flex h-12 flex-1 items-center justify-center rounded-xl border border-[color:var(--accent)] bg-[color:var(--accent-soft)] px-5 text-sm font-semibold text-[color:var(--accent)] transition hover:bg-[color:var(--accent)] hover:text-white sm:flex-none"
                 >
                   Try ETH
+                </Link>
+                <Link
+                  href={MARKET_HISTORY_DEMO_PATH}
+                  className="inline-flex h-12 flex-1 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-5 text-sm font-semibold text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] sm:flex-none"
+                >
+                  Market History Demo
                 </Link>
               </div>
             </div>
