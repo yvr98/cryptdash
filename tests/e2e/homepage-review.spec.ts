@@ -27,6 +27,13 @@ test.describe("Homepage Task 6 Review", () => {
       "href",
       "/token/ethereum"
     );
+    await expect(page.getByText("Proof-of-concept token research demo")).toBeVisible();
+    await expect(page.getByText("Best demo path")).toBeVisible();
+    await expect(page.getByText("Current demo coverage")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Open history demo" })).toHaveAttribute(
+      "href",
+      "/pool/base/0x6c561b446416e1a00e8e93e221854d6ea4171372?coinId=ethereum"
+    );
     await expect(page.getByText(/Search any token, see real liquidity and volume data across/i)).toBeVisible();
     await expect(page.getByText("Ethereum")).toBeVisible();
     await expect(page.getByText("Base")).toBeVisible();

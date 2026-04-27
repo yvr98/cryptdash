@@ -12,9 +12,34 @@ const ETHEREUM_COIN_ID = "ethereum";
 const ETHEREUM_PATH = buildTokenPath(ETHEREUM_COIN_ID);
 const MARKET_HISTORY_DEMO_PATH = buildPoolPath(
   "base",
-  "0x6c561b446416e1a00e8e93e221854d6ea4171372"
+  "0x6c561b446416e1a00e8e93e221854d6ea4171372",
+  ETHEREUM_COIN_ID
 );
 const CONTRACT_ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/;
+
+const DEMO_STATUS_ITEMS = [
+  {
+    label: "Token search",
+    value: "Live",
+    description: "Find CoinGecko tokens by name, symbol, or exact contract.",
+  },
+  {
+    label: "Pool comparison",
+    value: "Live",
+    description: "Open a token to compare current liquidity, volume, and activity.",
+  },
+  {
+    label: "Market history",
+    value: "Demo pool",
+    description: "Stored 24h history is populated for the Base ETH pool today.",
+  },
+] as const;
+
+const DEMO_FLOW = [
+  "Start with ETH to see the strongest complete path.",
+  "Open a token page to compare live pools across supported chains.",
+  "Use the market history demo for the stored-history proof of concept.",
+] as const;
 
 type HeroSearchKeyEvent = Parameters<NonNullable<ComponentProps<"input">["onKeyDown"]>>[0];
 type SearchMode = "text" | "contract";
@@ -191,18 +216,22 @@ export function HomeSearchHero() {
 
   return (
     <section className="relative flex flex-1 overflow-hidden">
-      <div className="mx-auto flex w-full max-w-5xl flex-1 items-center px-3 py-8 sm:px-6 md:py-12 lg:px-8 lg:py-20">
+      <div className="mx-auto grid w-full max-w-6xl flex-1 gap-6 px-3 py-6 sm:px-6 md:py-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] lg:items-start lg:px-8 lg:py-14">
         <div className="w-full space-y-6 sm:space-y-8">
           {/* Hero header */}
           <div className="max-w-2xl space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--accent)]">
+              Proof-of-concept token research demo
+            </p>
             <h1 className="text-3xl font-bold tracking-tight text-[color:var(--foreground)] sm:text-4xl md:text-5xl">
               Research a token.
               <span className="mt-1 block text-[color:var(--accent)]">
                 Find where it&apos;s trading.
               </span>
             </h1>
-            <p className="text-base text-[color:var(--muted)] sm:text-lg">
+            <p className="text-base leading-7 text-[color:var(--muted)] sm:text-lg">
               Search any token, see real liquidity and volume data across {SUPPORTED_CHAIN_LIST.length} chains.
+              Stored market history is currently a demo path for one Base ETH pool while the collector matures.
             </p>
             <div className="flex flex-wrap gap-2 text-xs">
               {SUPPORTED_CHAIN_LIST.map((chain) => (
@@ -249,12 +278,6 @@ export function HomeSearchHero() {
                   className="inline-flex h-12 flex-1 items-center justify-center rounded-xl border border-[color:var(--accent)] bg-[color:var(--accent-soft)] px-5 text-sm font-semibold text-[color:var(--accent)] transition hover:bg-[color:var(--accent)] hover:text-white sm:flex-none"
                 >
                   Try ETH
-                </Link>
-                <Link
-                  href={MARKET_HISTORY_DEMO_PATH}
-                  className="inline-flex h-12 flex-1 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-5 text-sm font-semibold text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] sm:flex-none"
-                >
-                  Market History Demo
                 </Link>
               </div>
             </div>
@@ -376,6 +399,78 @@ export function HomeSearchHero() {
             </div>
           )}
         </div>
+
+        <aside className="space-y-4 lg:sticky lg:top-24">
+          <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 shadow-[var(--shadow-panel)] sm:rounded-2xl sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+                  Best demo path
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-[color:var(--foreground)]">
+                  Start with Ethereum, then open the Base history pool.
+                </h2>
+              </div>
+              <span className="rounded-md border border-[color:var(--accent)] bg-[color:var(--accent-soft)] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[color:var(--accent)]">
+                POC
+              </span>
+            </div>
+
+            <ol className="mt-5 space-y-3">
+              {DEMO_FLOW.map((step, index) => (
+                <li key={step} className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[color:var(--accent-soft)] text-xs font-semibold text-[color:var(--accent)]">
+                    {index + 1}
+                  </span>
+                  <span className="text-sm leading-6 text-[color:var(--muted)]">
+                    {step}
+                  </span>
+                </li>
+              ))}
+            </ol>
+
+            <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <Link
+                href={ETHEREUM_PATH}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[color:var(--accent)] px-4 text-sm font-semibold text-white transition hover:opacity-90"
+              >
+                Open ETH demo
+              </Link>
+              <Link
+                href={MARKET_HISTORY_DEMO_PATH}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] px-4 text-sm font-semibold text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+              >
+                Open history demo
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 sm:rounded-2xl sm:p-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--muted)]">
+              Current demo coverage
+            </p>
+            <div className="mt-4 divide-y divide-[color:var(--border)]">
+              {DEMO_STATUS_ITEMS.map((item) => (
+                <div
+                  key={item.label}
+                  className="py-3 first:pt-0 last:pb-0"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[color:var(--foreground)]">
+                      {item.label}
+                    </p>
+                    <span className="shrink-0 rounded-md bg-[color:var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold text-[color:var(--accent)]">
+                      {item.value}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
+                    {item.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
       </div>
     </section>
   );

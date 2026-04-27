@@ -75,6 +75,22 @@ function previewAddress(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+function uniqueUpstreamErrors(
+  errors: TokenDetailPageData["dataState"]["errors"],
+) {
+  const seen = new Set<string>();
+
+  return errors.filter((error) => {
+    const key = `${error.source}-${error.category}-${error.userMessage}`;
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
@@ -152,6 +168,7 @@ export function TokenDetailShell({ data }: TokenDetailShellProps) {
     data.recommendation,
     data.eligiblePools
   );
+  const upstreamErrors = uniqueUpstreamErrors(data.dataState.errors);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
@@ -217,7 +234,7 @@ export function TokenDetailShell({ data }: TokenDetailShellProps) {
           </section>
 
           {/* Upstream error banner */}
-          {data.dataState.status === "upstream_error" && data.dataState.errors.length > 0 && (
+          {data.dataState.status === "upstream_error" && upstreamErrors.length > 0 && (
             <section
               data-testid="upstream-error-banner"
               className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5"
@@ -226,8 +243,11 @@ export function TokenDetailShell({ data }: TokenDetailShellProps) {
                 Data temporarily unavailable
               </p>
               <div className="mt-2 space-y-1">
-                {data.dataState.errors.map((error) => (
-                  <p key={`${error.source}-${error.category}`} className="text-sm text-[color:var(--muted)]">
+                {upstreamErrors.map((error) => (
+                  <p
+                    key={`${error.source}-${error.category}-${error.userMessage}`}
+                    className="text-sm text-[color:var(--muted)]"
+                  >
                     {error.userMessage}
                   </p>
                 ))}

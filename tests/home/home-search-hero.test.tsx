@@ -147,4 +147,20 @@ describe("HomeSearchHero", () => {
     expect(screen.queryByText(/explore tokens/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/browse/i)).not.toBeInTheDocument();
   });
+
+  it("explains the proof-of-concept demo path and market-history coverage", () => {
+    render(<HomeSearchHero />);
+
+    expect(screen.getByText("Proof-of-concept token research demo")).toBeInTheDocument();
+    expect(screen.getByText("Best demo path")).toBeInTheDocument();
+    expect(screen.getByText("Current demo coverage")).toBeInTheDocument();
+    expect(screen.getByText("Token search")).toBeInTheDocument();
+    expect(screen.getByText("Pool comparison")).toBeInTheDocument();
+    expect(screen.getByText("Market history")).toBeInTheDocument();
+    expect(screen.getByText(/Stored 24h history is populated for the Base ETH pool today/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /open history demo/i })).toHaveAttribute(
+      "href",
+      "/pool/base/0x6c561b446416e1a00e8e93e221854d6ea4171372?coinId=ethereum"
+    );
+  });
 });

@@ -126,6 +126,42 @@ describe("TokenDetailShell", () => {
     ).toBeInTheDocument();
   });
 
+  it("deduplicates repeated upstream-error messages", () => {
+    render(
+      <TokenDetailShell
+        data={makeShellData({
+          dataState: {
+            status: "upstream_error",
+            errors: [
+              {
+                category: "server_error",
+                source: "geckoterminal",
+                userMessage: "The upstream data provider returned an error.",
+              },
+              {
+                category: "server_error",
+                source: "geckoterminal",
+                userMessage: "The upstream data provider returned an error.",
+              },
+              {
+                category: "rate_limited",
+                source: "geckoterminal",
+                userMessage: "The upstream data provider is rate-limiting requests.",
+              },
+            ],
+          },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getAllByText("The upstream data provider returned an error."),
+    ).toHaveLength(1);
+    expect(
+      screen.getByText("The upstream data provider is rate-limiting requests."),
+    ).toBeInTheDocument();
+  });
+
   it("does not render upstream-error banner when data state is complete", () => {
     render(<TokenDetailShell data={makeShellData()} />);
 
