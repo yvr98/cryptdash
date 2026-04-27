@@ -96,13 +96,18 @@ function genericErrorFetcher(): (
 
 function createSideEffects(
   overrides: PoolDetailPageDataSideEffects = {},
-): Required<PoolDetailPageDataSideEffects> {
+): PoolDetailPageDataSideEffects &
+  Required<Pick<
+    PoolDetailPageDataSideEffects,
+    "captureSnapshot" | "logCaptureFailure" | "readHistory"
+  >> {
   return {
     captureSnapshot: overrides.captureSnapshot ?? vi.fn().mockResolvedValue({ status: "created", capturedAt: "2026-04-22T00:00:00.000Z" }),
     logCaptureFailure: overrides.logCaptureFailure ?? vi.fn(),
     readHistory:
       overrides.readHistory ??
       vi.fn().mockResolvedValue(createHistoryFixture()),
+    includeHistory: overrides.includeHistory,
   };
 }
 
@@ -212,6 +217,26 @@ describe("getPoolDetailPageData", () => {
       volume24hUsd: pool.volume24hUsd,
       transactions24h: pool.transactions24h,
     });
+  });
+
+  it("can skip history reads so routes can stream that section separately", async () => {
+    const sideEffects = createSideEffects({
+      includeHistory: false,
+      readHistory: vi.fn().mockRejectedValue(new Error("history should not block shell")),
+    });
+
+    const result = await getPoolDetailPageData(
+      "eth",
+      "0xabc1230000000000000000000000000000000001",
+      undefined,
+      happyFetcher(),
+      REFERENCE_NOW,
+      sideEffects,
+    );
+
+    expect(sideEffects.readHistory).not.toHaveBeenCalled();
+    expect(result.history.state).toBe("unavailable");
+    expect(result.pool.pairLabel).toBe("WETH / USDC");
   });
 
   it("does not await capture before returning the live page model", async () => {

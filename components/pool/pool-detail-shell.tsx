@@ -1,17 +1,20 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { HistoryMetricCard } from "@/components/pool/history-metric-card";
 import { buildPoolPath, getChainDef } from "@/lib/constants";
-import type { PoolDetailPageData } from "@/lib/page-data/pool-detail";
+import type { PoolDetailHistory, PoolDetailPageData } from "@/lib/page-data/pool-detail";
 import type { FreshnessBucket } from "@/lib/page-data/discovery";
 
 const MARKET_HISTORY_DEMO_PATH = buildPoolPath(
   "base",
-  "0x6c561b446416e1a00e8e93e221854d6ea4171372"
+  "0x6c561b446416e1a00e8e93e221854d6ea4171372",
+  "ethereum"
 );
 
 type PoolDetailShellProps = {
   data: PoolDetailPageData;
+  historySlot?: ReactNode;
 };
 
 function formatUsd(value: number | null): string {
@@ -123,7 +126,97 @@ function MetricCard({
   );
 }
 
-export function PoolDetailShell({ data }: PoolDetailShellProps) {
+export function PoolHistoryLoadingSection() {
+  return (
+    <section className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 sm:rounded-2xl sm:p-5 md:p-6">
+      <p className="text-xs font-medium uppercase tracking-wider text-[color:var(--muted)]">
+        Market history
+      </p>
+      <p className="mt-2 text-sm text-[color:var(--muted)]">
+        Loading stored 24h history from the Rails backend. The rest of the pool page is ready while this warms up.
+      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {["Liquidity", "24h Vol", "24h Txs"].map((label) => (
+          <div
+            key={label}
+            className="min-h-28 rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] p-4"
+          >
+            <p className="text-[10px] font-medium uppercase tracking-wider text-[color:var(--muted)]">
+              {label}
+            </p>
+            <div className="mt-3 h-4 w-24 rounded bg-[color:var(--surface)]" />
+            <div className="mt-3 h-2 w-full rounded bg-[color:var(--surface)]" />
+            <div className="mt-2 h-2 w-3/4 rounded bg-[color:var(--surface)]" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function PoolHistorySection({ history }: { history: PoolDetailHistory }) {
+  return (
+    <section className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 sm:rounded-2xl sm:p-5 md:p-6">
+      <p className="text-xs font-medium uppercase tracking-wider text-[color:var(--muted)]">
+        Market history
+      </p>
+      <p className="mt-2 text-sm text-[color:var(--muted)]">
+        Last 24 hours of stored liquidity, volume, and transaction activity for this pool.
+      </p>
+
+      {history.state === "sparse" && (
+        <div className="mt-2 space-y-2">
+          <p className="text-sm text-[color:var(--muted)]">
+            History is still building for this pool. Check back after more snapshots are collected.
+          </p>
+          <Link
+            href={MARKET_HISTORY_DEMO_PATH}
+            className="inline-flex text-sm font-medium text-[color:var(--accent)] transition hover:opacity-80"
+          >
+            See a fully-built market history example →
+          </Link>
+        </div>
+      )}
+
+      {history.state === "unavailable" && (
+        <div className="mt-2 space-y-2">
+          <p className="text-sm text-[color:var(--muted)]">
+            Stored history is temporarily unavailable for this pool. Try refreshing in a moment.
+          </p>
+          <Link
+            href={MARKET_HISTORY_DEMO_PATH}
+            className="inline-flex text-sm font-medium text-[color:var(--accent)] transition hover:opacity-80"
+          >
+            See a fully-built market history example →
+          </Link>
+        </div>
+      )}
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {history.cards.map((card) => {
+          const valueFormatter = card.label === "24h Txs" ? formatCount : formatUsd;
+          const value = valueFormatter(card.latestValue);
+          const deltaText = formatSignedAbsoluteDelta(card.delta, valueFormatter);
+          const deltaClassName = changeColor(card.delta);
+          const isSectionUnavailable = history.state === "unavailable";
+
+          return (
+            <HistoryMetricCard
+              key={card.label}
+              card={card}
+              value={value}
+              deltaText={deltaText}
+              deltaClassName={deltaClassName}
+              isSectionUnavailable={isSectionUnavailable}
+            />
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+export function PoolDetailShell({ data, historySlot }: PoolDetailShellProps) {
   const chainName = resolveChainName(data.pool.chainId, data.pool.networkId);
 
   return (
@@ -207,63 +300,7 @@ export function PoolDetailShell({ data }: PoolDetailShellProps) {
           </div>
         </section>
 
-        <section className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 sm:rounded-2xl sm:p-5 md:p-6">
-          <p className="text-xs font-medium uppercase tracking-wider text-[color:var(--muted)]">
-            Market history
-          </p>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">
-            Last 24 hours of stored liquidity, volume, and transaction activity for this pool.
-          </p>
-
-          {data.history.state === "sparse" && (
-            <div className="mt-2 space-y-2">
-              <p className="text-sm text-[color:var(--muted)]">
-                History is still building for this pool. Check back after more snapshots are collected.
-              </p>
-              <Link
-                href={MARKET_HISTORY_DEMO_PATH}
-                className="inline-flex text-sm font-medium text-[color:var(--accent)] transition hover:opacity-80"
-              >
-                See a fully-built market history example →
-              </Link>
-            </div>
-          )}
-
-          {data.history.state === "unavailable" && (
-            <div className="mt-2 space-y-2">
-              <p className="text-sm text-[color:var(--muted)]">
-                Stored history is temporarily unavailable for this pool. Try refreshing in a moment.
-              </p>
-              <Link
-                href={MARKET_HISTORY_DEMO_PATH}
-                className="inline-flex text-sm font-medium text-[color:var(--accent)] transition hover:opacity-80"
-              >
-                See a fully-built market history example →
-              </Link>
-            </div>
-          )}
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {data.history.cards.map((card) => {
-              const valueFormatter = card.label === "24h Txs" ? formatCount : formatUsd;
-              const value = valueFormatter(card.latestValue);
-              const deltaText = formatSignedAbsoluteDelta(card.delta, valueFormatter);
-              const deltaClassName = changeColor(card.delta);
-              const isSectionUnavailable = data.history.state === "unavailable";
-
-              return (
-                <HistoryMetricCard
-                  key={card.label}
-                  card={card}
-                  value={value}
-                  deltaText={deltaText}
-                  deltaClassName={deltaClassName}
-                  isSectionUnavailable={isSectionUnavailable}
-                />
-              );
-            })}
-          </div>
-        </section>
+        {historySlot ?? <PoolHistorySection history={data.history} />}
 
         <section className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 sm:rounded-2xl sm:p-5 md:p-6">
           <p className="text-xs font-medium uppercase tracking-wider text-[color:var(--muted)]">

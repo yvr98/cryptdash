@@ -109,6 +109,7 @@ export interface PoolDetailPageDataSideEffects {
   captureSnapshot?: PoolSnapshotCapturer;
   logCaptureFailure?: PoolSnapshotCaptureFailureLogger;
   readHistory?: PoolSnapshotHistoryReader;
+  includeHistory?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -349,6 +350,14 @@ async function readPoolHistory(
   }
 }
 
+export async function getPoolDetailHistory(
+  network: string,
+  poolAddress: string,
+  readHistory: PoolSnapshotHistoryReader = fetchPoolSnapshotHistory,
+): Promise<PoolDetailHistory> {
+  return readPoolHistory(network, poolAddress, readHistory);
+}
+
 // ---------------------------------------------------------------------------
 // Main page data assembly
 // ---------------------------------------------------------------------------
@@ -384,6 +393,7 @@ export async function getPoolDetailPageData(
   const logCaptureFailure =
     sideEffects.logCaptureFailure ?? defaultLogCaptureFailure;
   const readHistory = sideEffects.readHistory ?? fetchPoolSnapshotHistory;
+  const includeHistory = sideEffects.includeHistory ?? true;
 
   try {
     pool = await fetchPool(network, poolAddress);
@@ -405,7 +415,7 @@ export async function getPoolDetailPageData(
     pool = stubPool(network, poolAddress);
   }
 
-  if (hasLivePool) {
+  if (hasLivePool && includeHistory) {
     history = await readPoolHistory(network, poolAddress, readHistory);
   }
 

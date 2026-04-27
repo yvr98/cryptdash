@@ -35,6 +35,7 @@ const mockFetchPoolRecord = vi.fn<
 >();
 
 vi.mock("@/lib/page-data/pool-detail", () => ({
+  getPoolDetailHistory: vi.fn(),
   getPoolDetailPageData: (
     ...args: [string, string, string?]
   ) => mockGetPoolDetailPageData(...args),

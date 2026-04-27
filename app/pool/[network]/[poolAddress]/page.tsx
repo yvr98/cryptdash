@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { PoolDetailShell } from "@/components/pool/pool-detail-shell";
+import { Suspense } from "react";
+import {
+  PoolDetailShell,
+  PoolHistoryLoadingSection,
+  PoolHistorySection,
+} from "@/components/pool/pool-detail-shell";
 import { fetchPoolRecord } from "@/lib/api/geckoterminal";
 import { isUpstreamError } from "@/lib/api/upstream-error";
 import {
+  getPoolDetailHistory,
   getPoolDetailPageData,
   type PoolDetailPageDataSideEffects,
 } from "@/lib/page-data/pool-detail";
@@ -81,7 +87,10 @@ async function loadPoolDetailPageData(
       coinId,
       undefined,
       undefined,
-      sideEffects,
+      {
+        ...sideEffects,
+        includeHistory: false,
+      },
     );
   } catch (error) {
     if (isUpstreamError(error) && error.category === "not_found") {
@@ -90,6 +99,25 @@ async function loadPoolDetailPageData(
 
     throw error;
   }
+}
+
+async function PoolHistoryStream({
+  network,
+  poolAddress,
+  historyTestState,
+}: {
+  network: string;
+  poolAddress: string;
+  historyTestState?: string;
+}) {
+  const sideEffects = resolveE2EPoolDetailSideEffects(historyTestState);
+  const history = await getPoolDetailHistory(
+    network,
+    poolAddress,
+    sideEffects?.readHistory,
+  );
+
+  return <PoolHistorySection history={history} />;
 }
 
 export default async function PoolDetailPage({
@@ -108,7 +136,18 @@ export default async function PoolDetailPage({
 
   return (
     <main className="flex flex-1">
-      <PoolDetailShell data={data} />
+      <PoolDetailShell
+        data={data}
+        historySlot={
+          <Suspense fallback={<PoolHistoryLoadingSection />}>
+            <PoolHistoryStream
+              network={network}
+              poolAddress={poolAddress}
+              historyTestState={historyTestState}
+            />
+          </Suspense>
+        }
+      />
     </main>
   );
 }
