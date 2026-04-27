@@ -73,9 +73,8 @@ export function PoolHistoryAutoRefresh({
 
         if (isCancelled) return;
 
-        setHistory(nextHistory);
-
         if (nextHistory.state === "ready") {
+          setHistory(nextHistory);
           setStatus("ready");
           return;
         }
@@ -113,23 +112,9 @@ export function PoolHistoryAutoRefresh({
     };
   }, [historyTestState, initialHistory, network, poolAddress]);
 
-  if (status === "loading") {
+  if (status === "loading" || status === "checking" || status === "stopped") {
     return <PoolHistoryLoadingSection />;
   }
 
-  return (
-    <div className="space-y-2">
-      <PoolHistorySection history={history} />
-      {history.state !== "ready" && status === "checking" && (
-        <p className="px-1 text-xs text-[color:var(--muted)]">
-          Checking for stored history updates automatically.
-        </p>
-      )}
-      {history.state !== "ready" && status === "stopped" && (
-        <p className="px-1 text-xs text-[color:var(--muted)]">
-          Still waiting on stored history. This section will update on your next visit.
-        </p>
-      )}
-    </div>
-  );
+  return <PoolHistorySection history={history} />;
 }

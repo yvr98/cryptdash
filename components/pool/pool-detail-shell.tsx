@@ -133,7 +133,7 @@ export function PoolHistoryLoadingSection() {
         Market history
       </p>
       <p className="mt-2 text-sm text-[color:var(--muted)]">
-        Loading stored 24h history from the Rails backend. The rest of the pool page is ready while this warms up.
+        Loading stored 24h history from the Rails backend. This section will update automatically when ready.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {["Liquidity", "24h Vol", "24h Txs"].map((label) => (

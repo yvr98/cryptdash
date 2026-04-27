@@ -52,6 +52,15 @@ const READY_HISTORY: PoolDetailHistory = {
   ],
 };
 
+const SPARSE_HISTORY: PoolDetailHistory = {
+  state: "sparse",
+  cards: [
+    { label: "Liquidity", state: "sparse", latestValue: null, delta: null, points: [] },
+    { label: "24h Vol", state: "sparse", latestValue: null, delta: null, points: [] },
+    { label: "24h Txs", state: "sparse", latestValue: null, delta: null, points: [] },
+  ],
+};
+
 function createJsonResponse(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), {
     status,
@@ -104,5 +113,26 @@ describe("PoolHistoryAutoRefresh", () => {
     );
     expect(screen.getByText("$5.00M")).toBeInTheDocument();
     expect(screen.queryByText(/Loading stored 24h history/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps the loading state for non-ready refresh responses", async () => {
+    fetchMock.mockResolvedValue(createJsonResponse(SPARSE_HISTORY));
+
+    render(
+      <PoolHistoryAutoRefresh
+        network="base"
+        poolAddress="0x6c561b446416e1a00e8e93e221854d6ea4171372"
+        initialHistory={UNAVAILABLE_HISTORY}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(
+      screen.getByText(/Loading stored 24h history from the Rails backend/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("History still building")).not.toBeInTheDocument();
   });
 });
