@@ -134,7 +134,7 @@ export function getRailsPoolSnapshotHistoryPath(
 // ---------------------------------------------------------------------------
 
 /** Default request timeout (ms) for calls to the Rails seam. */
-export const RAILS_REQUEST_TIMEOUT_MS = 5_000 as const;
+export const RAILS_REQUEST_TIMEOUT_MS = 30_000 as const;
 
 /** Default request timeout (ms) for internal write calls to the Rails seam. */
 export const RAILS_INTERNAL_WRITE_REQUEST_TIMEOUT_MS = 5_000 as const;

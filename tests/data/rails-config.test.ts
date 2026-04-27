@@ -236,8 +236,8 @@ describe("Rails seam constants", () => {
     );
   });
 
-  test("RAILS_REQUEST_TIMEOUT_MS is 5000", () => {
-    expect(RAILS_REQUEST_TIMEOUT_MS).toBe(5_000);
+  test("RAILS_REQUEST_TIMEOUT_MS gives Render cold starts room to wake", () => {
+    expect(RAILS_REQUEST_TIMEOUT_MS).toBe(30_000);
   });
 
   test("RAILS_INTERNAL_WRITE_REQUEST_TIMEOUT_MS is 5000", () => {
