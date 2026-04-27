@@ -38,7 +38,7 @@ const DEMO_STATUS_ITEMS = [
 const DEMO_FLOW = [
   "Start with ETH to see the strongest complete path.",
   "Open a token page to compare live pools across supported chains.",
-  "Use the market history demo for the stored-history proof of concept.",
+  "Use the market history demo to inspect stored pool activity.",
 ] as const;
 
 type HeroSearchKeyEvent = Parameters<NonNullable<ComponentProps<"input">["onKeyDown"]>>[0];
@@ -60,8 +60,6 @@ const PLATFORM_LABEL_OVERRIDES = Object.freeze({
   ...SUPPORTED_PLATFORM_LABELS,
   "optimistic-ethereum": "Optimism",
 });
-
-const SUPPORTED_CHAIN_NAMES = SUPPORTED_CHAIN_LIST.map((c) => c.name).join(" · ");
 
 function isContractLikeQuery(query: string) {
   return CONTRACT_ADDRESS_PATTERN.test(query);
@@ -221,7 +219,7 @@ export function HomeSearchHero() {
           {/* Hero header */}
           <div className="max-w-2xl space-y-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--accent)]">
-              Proof-of-concept token research demo
+              Multi-chain token research
             </p>
             <h1 className="text-3xl font-bold tracking-tight text-[color:var(--foreground)] sm:text-4xl md:text-5xl">
               Research a token.
@@ -231,7 +229,7 @@ export function HomeSearchHero() {
             </h1>
             <p className="text-base leading-7 text-[color:var(--muted)] sm:text-lg">
               Search any token, see real liquidity and volume data across {SUPPORTED_CHAIN_LIST.length} chains.
-              Stored market history is currently a demo path for one Base ETH pool while the collector matures.
+              Market history is highlighted on a guided Base ETH example while coverage expands.
             </p>
             <div className="flex flex-wrap gap-2 text-xs">
               {SUPPORTED_CHAIN_LIST.map((chain) => (
@@ -412,7 +410,7 @@ export function HomeSearchHero() {
                 </h2>
               </div>
               <span className="rounded-md border border-[color:var(--accent)] bg-[color:var(--accent-soft)] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[color:var(--accent)]">
-                POC
+                Guided
               </span>
             </div>
 

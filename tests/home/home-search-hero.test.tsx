@@ -148,10 +148,10 @@ describe("HomeSearchHero", () => {
     expect(screen.queryByText(/browse/i)).not.toBeInTheDocument();
   });
 
-  it("explains the proof-of-concept demo path and market-history coverage", () => {
+  it("explains the guided demo path and market-history coverage", () => {
     render(<HomeSearchHero />);
 
-    expect(screen.getByText("Proof-of-concept token research demo")).toBeInTheDocument();
+    expect(screen.getByText("Multi-chain token research")).toBeInTheDocument();
     expect(screen.getByText("Best demo path")).toBeInTheDocument();
     expect(screen.getByText("Current demo coverage")).toBeInTheDocument();
     expect(screen.getByText("Token search")).toBeInTheDocument();

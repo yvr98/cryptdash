@@ -95,7 +95,7 @@ describe("PoolHistoryAutoRefresh", () => {
     );
 
     expect(
-      screen.getByText(/Loading stored 24h history from the Rails backend/i),
+      screen.getByText(/Preparing stored 24h history/i),
     ).toBeInTheDocument();
 
     await waitFor(() => {
@@ -112,7 +112,7 @@ describe("PoolHistoryAutoRefresh", () => {
       },
     );
     expect(screen.getByText("$5.00M")).toBeInTheDocument();
-    expect(screen.queryByText(/Loading stored 24h history/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Preparing stored 24h history/i)).not.toBeInTheDocument();
   });
 
   it("keeps the loading state for non-ready refresh responses", async () => {
@@ -131,7 +131,7 @@ describe("PoolHistoryAutoRefresh", () => {
     });
 
     expect(
-      screen.getByText(/Loading stored 24h history from the Rails backend/i),
+      screen.getByText(/Preparing stored 24h history/i),
     ).toBeInTheDocument();
     expect(screen.queryByText("History still building")).not.toBeInTheDocument();
   });

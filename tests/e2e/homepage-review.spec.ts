@@ -27,7 +27,7 @@ test.describe("Homepage Task 6 Review", () => {
       "href",
       "/token/ethereum"
     );
-    await expect(page.getByText("Proof-of-concept token research demo")).toBeVisible();
+    await expect(page.getByText("Multi-chain token research")).toBeVisible();
     await expect(page.getByText("Best demo path")).toBeVisible();
     await expect(page.getByText("Current demo coverage")).toBeVisible();
     await expect(page.getByRole("link", { name: "Open history demo" })).toHaveAttribute(
