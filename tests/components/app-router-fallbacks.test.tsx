@@ -5,6 +5,7 @@ import AppError from "@/app/error";
 import NotFound from "@/app/not-found";
 
 import TokenLoading from "@/app/token/[coinId]/loading";
+import TokenError from "@/app/token/[coinId]/error";
 import PoolLoading from "@/app/pool/[network]/[poolAddress]/loading";
 
 afterEach(() => {
@@ -53,6 +54,31 @@ describe("App Router fallback screens", () => {
     expect(consoleError).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("link", { name: /return home/i })).toHaveAttribute("href", "/");
   });
+
+  it("renders a token-specific retryable error boundary", () => {
+    const retry = vi.fn();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    render(
+      <TokenError
+        error={Object.assign(new Error("token boom"), { digest: "token-digest" })}
+        reset={retry}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "This token view couldn't load cleanly.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Reference: token-digest")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+
+    expect(retry).toHaveBeenCalledTimes(1);
+    expect(consoleError).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("link", { name: /search again/i })).toHaveAttribute("href", "/");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -65,7 +91,7 @@ describe("Route loading states", () => {
 
     // Should render animate-pulse skeleton elements
     const pulses = container.querySelectorAll(".animate-pulse");
-    expect(pulses.length).toBeGreaterThanOrEqual(1);
+    expect(pulses.length).toBeGreaterThanOrEqual(12);
     expect(container.querySelector("main")).toBeInTheDocument();
   });
 

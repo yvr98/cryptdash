@@ -147,10 +147,13 @@ describe("TokenDetailShell", () => {
     );
 
     expect(screen.getByTestId("market-data-freshness")).toHaveTextContent(
-      "Redis cache hit",
+      "Cached market data",
     );
     expect(screen.getByTestId("market-data-freshness")).toHaveTextContent(
       "Last fetched",
+    );
+    expect(screen.getByTestId("market-data-freshness")).toHaveTextContent(
+      "Served from Redis to reduce provider calls.",
     );
   });
 
@@ -179,7 +182,7 @@ describe("TokenDetailShell", () => {
     );
 
     expect(
-      screen.getByText("Showing cached market data. Try refreshing in a moment."),
+      screen.getByText("Showing the last cached market snapshot while the provider recovers."),
     ).toBeInTheDocument();
   });
 

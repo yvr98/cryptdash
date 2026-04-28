@@ -95,17 +95,36 @@ function cacheStatusLabel(
 ): string {
   switch (status) {
     case "hit":
-      return "Redis cache hit";
+      return "Cached market data";
     case "miss":
-      return "Redis cache miss";
+      return "Fresh market data";
     case "refreshed":
-      return "Redis cache refreshed";
+      return "Market data refreshed";
     case "stale_fallback":
-      return "Stale cache fallback";
+      return "Using cached fallback";
     case "unavailable":
       return "Cache unavailable";
     case "disabled":
       return "Live fetch";
+  }
+}
+
+function cacheStatusDescription(
+  status: TokenDetailPageData["marketDataStatus"]["cacheStatus"],
+): string {
+  switch (status) {
+    case "hit":
+      return "Served from Redis to reduce provider calls.";
+    case "miss":
+      return "Fetched from CoinGecko and cached for the next request.";
+    case "refreshed":
+      return "Cache was stale, so the latest provider response replaced it.";
+    case "stale_fallback":
+      return "Provider data failed, so the last cached response is being shown.";
+    case "unavailable":
+      return "The cache could not be reached, so live provider data is shown.";
+    case "disabled":
+      return "Redis is not configured for this environment.";
   }
 }
 
@@ -263,7 +282,7 @@ export function TokenDetailShell({ data }: TokenDetailShellProps) {
 
             <div
               data-testid="market-data-freshness"
-              className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[color:var(--muted)]"
+              className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[color:var(--muted)]"
             >
               <span className="rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-2 py-1 font-medium text-[color:var(--foreground)]">
                 {cacheStatusLabel(data.marketDataStatus.cacheStatus)}
@@ -278,6 +297,9 @@ export function TokenDetailShell({ data }: TokenDetailShellProps) {
                   formatFetchedAt(null)
                 )}
               </span>
+              <span className="basis-full text-[11px] text-[color:var(--muted)] sm:basis-auto">
+                {cacheStatusDescription(data.marketDataStatus.cacheStatus)}
+              </span>
             </div>
 
             {/* Market stats grid */}
@@ -290,10 +312,22 @@ export function TokenDetailShell({ data }: TokenDetailShellProps) {
           {data.dataState.status === "upstream_error" && upstreamErrors.length > 0 && (
             <section
               data-testid="upstream-error-banner"
-              className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5"
+              className={
+                data.marketDataStatus.cacheStatus === "stale_fallback"
+                  ? "rounded-2xl border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)] p-5"
+                  : "rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5"
+              }
             >
-              <p className="text-xs font-medium uppercase tracking-wider text-amber-400">
-                Data temporarily unavailable
+              <p
+                className={
+                  data.marketDataStatus.cacheStatus === "stale_fallback"
+                    ? "text-xs font-medium uppercase tracking-wider text-[color:var(--accent)]"
+                    : "text-xs font-medium uppercase tracking-wider text-amber-400"
+                }
+              >
+                {data.marketDataStatus.cacheStatus === "stale_fallback"
+                  ? "Cached fallback active"
+                  : "Data temporarily unavailable"}
               </p>
               <div className="mt-2 space-y-1">
                 {upstreamErrors.map((error) => (
@@ -307,7 +341,7 @@ export function TokenDetailShell({ data }: TokenDetailShellProps) {
               </div>
               <p className="mt-2 text-xs text-[color:var(--muted)]">
                 {data.marketDataStatus.cacheStatus === "stale_fallback"
-                  ? "Showing cached market data. Try refreshing in a moment."
+                  ? "Showing the last cached market snapshot while the provider recovers."
                   : "Showing available data. Try refreshing in a moment."}
               </p>
             </section>
