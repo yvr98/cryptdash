@@ -301,6 +301,45 @@ export interface SessionResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Account Watchlist (Rails-backed)
+// ---------------------------------------------------------------------------
+
+/** Watchlist entry returned by authenticated account routes. */
+export interface AccountWatchlistItem {
+  coinId: string;
+  name: string;
+  symbol: string;
+  thumbUrl: string | null;
+  /** ISO 8601 timestamp when the item was added. */
+  addedAt: string;
+}
+
+/** Auth mutation response from Rails account endpoints. */
+export interface RailsAuthMutationPayload {
+  session_token: string;
+  session: RailsSessionPayload;
+}
+
+/** Raw Rails watchlist item shape. */
+export interface RailsWatchlistItemPayload {
+  coin_id: string;
+  name: string;
+  symbol: string;
+  thumb_url: string | null;
+  added_at: string;
+}
+
+/** Raw Rails watchlist collection response. */
+export interface RailsWatchlistItemsPayload {
+  items: RailsWatchlistItemPayload[];
+}
+
+/** Raw Rails watchlist item mutation response. */
+export interface RailsWatchlistItemEnvelope {
+  item: RailsWatchlistItemPayload;
+}
+
+// ---------------------------------------------------------------------------
 // Pool Snapshot History (Normalized Adapter Output)
 // ---------------------------------------------------------------------------
 

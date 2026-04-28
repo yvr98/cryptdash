@@ -92,6 +92,12 @@ export function getRailsInternalSnapshotCaptureSecret(): string | null {
 /** Rails-side path for the session status endpoint (GET). */
 export const RAILS_SESSION_PATH = "/api/v1/session" as const;
 
+/** Rails-side path for account registration (POST). */
+export const RAILS_USERS_PATH = "/api/v1/users" as const;
+
+/** Rails-side path for watchlist collection reads/writes. */
+export const RAILS_WATCHLIST_ITEMS_PATH = "/api/v1/watchlist_items" as const;
+
 /** Rails-side header used only for the internal pool snapshot capture seam. */
 export const RAILS_INTERNAL_SNAPSHOT_CAPTURE_SECRET_HEADER =
   "X-CryptDash-Internal-Capture-Secret" as const;
@@ -127,6 +133,11 @@ export function getRailsPoolSnapshotHistoryPath(
     ":pool_address",
     encodeRailsPathSegment(poolAddress, "poolAddress")
   );
+}
+
+/** Build the Rails path for deleting a single watchlist item by coinId. */
+export function getRailsWatchlistItemPath(coinId: string): string {
+  return `${RAILS_WATCHLIST_ITEMS_PATH}/${encodeRailsPathSegment(coinId, "coinId")}`;
 }
 
 // ---------------------------------------------------------------------------

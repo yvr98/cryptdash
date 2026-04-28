@@ -5,7 +5,16 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores([".next/**", "out/**", "build/**", "test-results/**", "next-env.d.ts"]),
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "test-results/**",
+    "next-env.d.ts",
+    "rails/.bundle/**",
+    "rails/.bundle-home/**",
+    "rails/vendor/bundle/**",
+  ]),
 ]);
 
 export default eslintConfig;

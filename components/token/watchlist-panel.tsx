@@ -6,25 +6,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
 
+import { useAccount } from "@/components/account/account-provider";
 import { buildTokenPath } from "@/lib/constants";
-import { getWatchlist, subscribeWatchlist } from "@/lib/watchlist";
-
-function subscribeHydration() {
-  return () => {};
-}
-
-/** Stable empty array for SSR snapshot — must be the same reference every render. */
-const EMPTY_WATCHLIST: ReturnType<typeof getWatchlist> = [];
-
-const getClientHydrated = () => true;
-const getServerHydrated = () => false;
-const getServerWatchlist = () => EMPTY_WATCHLIST;
 
 export function WatchlistPanel() {
-  const isHydrated = useSyncExternalStore(subscribeHydration, getClientHydrated, getServerHydrated);
-  const entries = useSyncExternalStore(subscribeWatchlist, getWatchlist, getServerWatchlist);
+  const { isAuthenticated, status, watchlistItems, watchlistStatus } = useAccount();
+  const isLoading = status === "loading" || (isAuthenticated && watchlistStatus === "loading");
 
   return (
     <section
@@ -34,20 +22,24 @@ export function WatchlistPanel() {
       <div className="space-y-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-[color:var(--muted)]">
-            Watchlist
+            {isAuthenticated ? "Account watchlist" : "Guest watchlist"}
           </p>
           <h2 className="mt-1 text-lg font-bold text-[color:var(--foreground)]">
             Tracked tokens
           </h2>
         </div>
 
-        {!isHydrated ? null : entries.length === 0 ? (
+        {isLoading ? null : watchlistStatus === "error" ? (
+          <p className="text-sm text-[color:var(--muted)]">
+            Watchlist could not be loaded. Try refreshing in a moment.
+          </p>
+        ) : watchlistItems.length === 0 ? (
           <p className="text-sm text-[color:var(--muted)]">
             No tokens tracked yet. Add tokens from their detail pages.
           </p>
         ) : (
           <ul className="space-y-2" aria-label="Watchlist entries">
-            {entries.map((entry) => (
+            {watchlistItems.map((entry) => (
               <li key={entry.coinId}>
                 <Link
                   href={buildTokenPath(entry.coinId)}

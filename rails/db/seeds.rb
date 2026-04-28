@@ -58,3 +58,36 @@ if ENV["SEED_SAMPLE_POOL_HISTORY"] == "1"
 
   puts "Seeded sample pool history for base/0x6c561b446416e1a00e8e93e221854d6ea4171372"
 end
+
+if ENV["SEED_DEMO_USER"] == "1"
+  demo_email = ENV.fetch("DEMO_USER_EMAIL", "demo@cryptdash.local").strip.downcase
+  demo_password = ENV.fetch("DEMO_USER_PASSWORD", "password123")
+
+  demo_user = User.find_or_initialize_by(email: demo_email)
+  demo_user.password = demo_password
+  demo_user.password_confirmation = demo_password
+  demo_user.save!
+
+  [
+    {
+      coin_id: "bitcoin",
+      name: "Bitcoin",
+      symbol: "btc",
+      thumb_url: "https://assets.coingecko.com/coins/images/1/thumb/bitcoin.png"
+    },
+    {
+      coin_id: "ethereum",
+      name: "Ethereum",
+      symbol: "eth",
+      thumb_url: "https://assets.coingecko.com/coins/images/279/thumb/ethereum.png"
+    }
+  ].each do |attributes|
+    demo_user.watchlist_items.find_or_create_by!(coin_id: attributes[:coin_id]) do |item|
+      item.name = attributes[:name]
+      item.symbol = attributes[:symbol]
+      item.thumb_url = attributes[:thumb_url]
+    end
+  end
+
+  puts "Seeded demo user #{demo_user.email} with #{demo_user.watchlist_items.count} watchlist items"
+end

@@ -9,7 +9,12 @@ Rails.application.routes.draw do
   # Pool snapshot seams for issue #9.
   namespace :api do
     namespace :v1 do
-      resource :session, only: [:show]
+      resources :users, only: [:create]
+      resource :session, only: [:show, :create, :destroy]
+      resources :watchlist_items, only: [:index, :create], param: :coin_id
+      delete "watchlist_items/:coin_id",
+             to: "watchlist_items#destroy",
+             as: :watchlist_item
 
       get  "pools/:network_id/:pool_address/snapshots",
            to: "pool_snapshots#index",

@@ -76,6 +76,7 @@ GEM
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
     base64 (0.3.0)
+    bcrypt (3.1.22)
     bigdecimal (4.1.2)
     bindex (0.8.1)
     bootsnap (1.23.0)
@@ -96,6 +97,7 @@ GEM
     ffi (1.17.4-arm-linux-gnu)
     ffi (1.17.4-arm-linux-musl)
     ffi (1.17.4-arm64-darwin)
+    ffi (1.17.4-x64-mingw-ucrt)
     ffi (1.17.4-x86_64-darwin)
     ffi (1.17.4-x86_64-linux-gnu)
     ffi (1.17.4-x86_64-linux-musl)
@@ -154,6 +156,8 @@ GEM
       racc (~> 1.4)
     nokogiri (1.19.2-arm64-darwin)
       racc (~> 1.4)
+    nokogiri (1.19.2-x64-mingw-ucrt)
+      racc (~> 1.4)
     nokogiri (1.19.2-x86_64-darwin)
       racc (~> 1.4)
     nokogiri (1.19.2-x86_64-linux-gnu)
@@ -164,6 +168,7 @@ GEM
     pg (1.6.3-aarch64-linux)
     pg (1.6.3-aarch64-linux-musl)
     pg (1.6.3-arm64-darwin)
+    pg (1.6.3-x64-mingw-ucrt)
     pg (1.6.3-x86_64-darwin)
     pg (1.6.3-x86_64-linux)
     pg (1.6.3-x86_64-linux-musl)
@@ -236,6 +241,8 @@ GEM
     tsort (0.2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
+    tzinfo-data (1.2026.2)
+      tzinfo (>= 1.0.0)
     uri (1.1.1)
     useragent (0.16.11)
     web-console (4.3.0)
@@ -254,12 +261,14 @@ PLATFORMS
   arm-linux-gnu
   arm-linux-musl
   arm64-darwin
+  x64-mingw-ucrt
   x86_64-darwin
   x86_64-linux
   x86_64-linux-gnu
   x86_64-linux-musl
 
 DEPENDENCIES
+  bcrypt (~> 3.1.7)
   bootsnap
   debug
   image_processing (~> 1.2)

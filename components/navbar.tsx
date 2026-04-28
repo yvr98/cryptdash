@@ -12,6 +12,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { useAccount } from "@/components/account/account-provider";
 import { buildTokenPath } from "@/lib/constants";
 import type { SearchResult } from "@/lib/types";
 
@@ -24,6 +25,7 @@ function isContractLikeQuery(query: string) {
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { isAuthenticated, logout, session, status } = useAccount();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +37,8 @@ export function Navbar() {
 
   const isHome = pathname === "/";
   const discoverLinkClassName =
+    "inline-flex h-9 items-center rounded-lg border border-[color:var(--border)] px-3 text-sm font-medium text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]";
+  const accountLinkClassName =
     "inline-flex h-9 items-center rounded-lg border border-[color:var(--border)] px-3 text-sm font-medium text-[color:var(--foreground)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]";
 
   // Close dropdown when clicking outside
@@ -131,6 +135,15 @@ export function Navbar() {
     }
   }
 
+  async function handleLogout() {
+    try {
+      await logout();
+      router.push("/");
+    } catch {
+      // Keep the current session visible if logout fails.
+    }
+  }
+
   return (
     <nav className="sticky top-0 z-50 border-b border-[color:var(--border)] bg-[color:var(--background)]/80 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-3 sm:px-4 lg:px-8">
@@ -151,6 +164,25 @@ export function Navbar() {
           <Link href="/discover" className={discoverLinkClassName}>
             Discover
           </Link>
+
+          {status === "ready" && isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden max-w-36 truncate text-xs text-[color:var(--muted)] sm:inline">
+                {session?.user?.email}
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className={accountLinkClassName}
+              >
+                Log out
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" className={accountLinkClassName}>
+              Sign in
+            </Link>
+          )}
 
           {/* Desktop search bar — hidden on home page and on very small screens */}
           {!isHome && (

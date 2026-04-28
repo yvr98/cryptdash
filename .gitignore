@@ -2,6 +2,9 @@
 node_modules/
 /.pnp
 .pnp.*
+rails/.bundle/
+rails/.bundle-home/
+rails/vendor/bundle/
 
 # testing
 playwright-report/

@@ -13,7 +13,7 @@
 
 import Link from "next/link";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { PoolCandidate, KnownChainId } from "@/lib/types";
 import { buildPoolPath, getChainDef } from "@/lib/constants";
@@ -266,15 +266,12 @@ function PoolCard({
 export function PoolsTable({ pools, recommendedPoolAddress, coinId }: PoolsTableProps) {
   const pageCount = Math.ceil(pools.length / POOLS_PER_PAGE);
   const [currentPage, setCurrentPage] = useState(1);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pools]);
+  const activePage = Math.min(currentPage, Math.max(pageCount, 1));
 
   const visiblePools = useMemo(() => {
-    const startIndex = (currentPage - 1) * POOLS_PER_PAGE;
+    const startIndex = (activePage - 1) * POOLS_PER_PAGE;
     return pools.slice(startIndex, startIndex + POOLS_PER_PAGE);
-  }, [currentPage, pools]);
+  }, [activePage, pools]);
 
   if (pools.length === 0) {
     return (
@@ -415,8 +412,8 @@ export function PoolsTable({ pools, recommendedPoolAddress, coinId }: PoolsTable
 
       {/* ---- Bottom pagination ---- */}
       {pageCount > 1 && (
-        <PaginationNav
-          currentPage={currentPage}
+          <PaginationNav
+          currentPage={activePage}
           pageCount={pageCount}
           onPageChange={setCurrentPage}
           totalPools={pools.length}
