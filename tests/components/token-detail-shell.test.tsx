@@ -48,6 +48,12 @@ function makeShellData(
       circulatingSupply: 120_000_000,
       fullyDilutedValuation: 360_000_000_000,
     },
+    marketDataStatus: {
+      cacheStatus: "disabled",
+      lastFetchedAt: null,
+      cacheKey: null,
+      ttlSeconds: 60,
+    },
     priceContext: { marketCapRank: 1 },
     supportedChains: [],
     availableSupportedChains: [],
@@ -123,6 +129,57 @@ describe("TokenDetailShell", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText("Showing available data. Try refreshing in a moment."),
+    ).toBeInTheDocument();
+  });
+
+  it("renders market data cache freshness metadata", () => {
+    render(
+      <TokenDetailShell
+        data={makeShellData({
+          marketDataStatus: {
+            cacheStatus: "hit",
+            lastFetchedAt: "2026-04-28T12:30:00.000Z",
+            cacheKey: "market:coingecko:coin-detail:ethereum",
+            ttlSeconds: 60,
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId("market-data-freshness")).toHaveTextContent(
+      "Redis cache hit",
+    );
+    expect(screen.getByTestId("market-data-freshness")).toHaveTextContent(
+      "Last fetched",
+    );
+  });
+
+  it("explains stale-cache fallback when upstream fails after cached data exists", () => {
+    render(
+      <TokenDetailShell
+        data={makeShellData({
+          marketDataStatus: {
+            cacheStatus: "stale_fallback",
+            lastFetchedAt: "2026-04-28T12:30:00.000Z",
+            cacheKey: "market:coingecko:coin-detail:ethereum",
+            ttlSeconds: 60,
+          },
+          dataState: {
+            status: "upstream_error",
+            errors: [
+              {
+                category: "rate_limited",
+                source: "coingecko",
+                userMessage: "Upstream is rate-limiting requests.",
+              },
+            ],
+          },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText("Showing cached market data. Try refreshing in a moment."),
     ).toBeInTheDocument();
   });
 

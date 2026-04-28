@@ -12,7 +12,8 @@ A multi-chain token research tool that aggregates DEX pool data across Ethereum,
 - **Multi-Chain Pool Comparison** — Side-by-side view of liquidity, volume, transactions, and price change across 5 chains
 - **Smart Pool Recommendations** — Deterministic scoring engine that surfaces the best-traded pool with confidence labels and transparent rationale
 - **OHLCV Candlestick Charts** — Interactive hourly charts powered by lightweight-charts, defaulting to the recommended market
-- **Local Watchlist** — Track tokens across sessions with browser-based persistence
+- **Account Watchlist** — Sign up, log in, and persist token watchlists through the Rails/PostgreSQL backend, with a guest fallback in local storage
+- **Cached Market Data** — Optional Upstash Redis cache for CoinGecko token details with stale fallback on provider errors
 - **Graceful Degradation** — Upstream API failures surface labeled fallback states instead of crashes
 
 ## Tech Stack
@@ -24,6 +25,7 @@ A multi-chain token research tool that aggregates DEX pool data across Ethereum,
 | **Styling** | Tailwind CSS v4 |
 | **Charts** | lightweight-charts v5 |
 | **APIs** | CoinGecko + GeckoTerminal |
+| **Cache** | Upstash Redis |
 | **Testing** | Vitest + Testing Library |
 | **Deployment** | Vercel |
 
@@ -41,11 +43,17 @@ COINGECKO_API_KEY=your_demo_api_key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 RAILS_BASE_URL=http://127.0.0.1:3001
 INTERNAL_SNAPSHOT_CAPTURE_SECRET=your_shared_capture_secret
+UPSTASH_REDIS_REST_URL=your_upstash_rest_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_rest_token
+MARKET_DATA_CACHE_TTL_SECONDS=60
+MARKET_DATA_STALE_CACHE_TTL_SECONDS=3600
 ```
 
 > Get a free API key at [coingecko.com/api](https://www.coingecko.com/en/api). GeckoTerminal's public API requires no key.
 
 `RAILS_BASE_URL` points the Next.js app at the sibling Rails API. `INTERNAL_SNAPSHOT_CAPTURE_SECRET` is optional in local development unless you want live snapshot capture enabled, but production requires it on both the Next.js and Rails deployments with the same value.
+
+The Upstash Redis variables are optional locally. When they are absent, CoinGecko requests still work as live fetches. When present, token detail responses are cached for `MARKET_DATA_CACHE_TTL_SECONDS`, retained for stale fallback until `MARKET_DATA_STALE_CACHE_TTL_SECONDS`, and surfaced in the UI with the last fetched time.
 
 ```bash
 npm run dev        # Start dev server

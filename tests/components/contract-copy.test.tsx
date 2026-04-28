@@ -46,6 +46,12 @@ function makeShellData(overrides?: Partial<TokenDetailPageData>): TokenDetailPag
       circulatingSupply: 120_000_000,
       fullyDilutedValuation: 360_000_000_000,
     },
+    marketDataStatus: {
+      cacheStatus: "disabled",
+      lastFetchedAt: null,
+      cacheKey: null,
+      ttlSeconds: 60,
+    },
     priceContext: { marketCapRank: 1 },
     supportedChains: [
       {

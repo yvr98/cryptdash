@@ -7,6 +7,15 @@
 // API key consumed from process.env — never exposed client-side.
 // =============================================================================
 
+import {
+  buildMarketCacheKey,
+  getMarketCacheFreshTtlSeconds,
+  isFreshMarketCacheEntry,
+  isRedisMarketCacheEnabled,
+  readMarketCacheEntry,
+  writeMarketCacheEntry,
+  type MarketCacheEntry,
+} from "@/lib/api/market-cache";
 import type { SearchResult, Token, MarketData } from "@/lib/types";
 import { UpstreamError, classifyHttpStatus } from "@/lib/api/upstream-error";
 
@@ -149,6 +158,23 @@ export async function searchCoins(query: string): Promise<SearchResult[]> {
 export interface TokenDetail {
   token: Token;
   platforms: Record<string, string>;
+  marketDataStatus?: TokenMarketDataStatus;
+}
+
+export type TokenMarketDataCacheStatus =
+  | "disabled"
+  | "hit"
+  | "miss"
+  | "refreshed"
+  | "stale_fallback"
+  | "unavailable";
+
+export interface TokenMarketDataStatus {
+  cacheStatus: TokenMarketDataCacheStatus;
+  lastFetchedAt: string | null;
+  cacheKey: string;
+  ttlSeconds: number;
+  fallbackError?: unknown;
 }
 
 /**
@@ -156,6 +182,79 @@ export interface TokenDetail {
  * Returns a normalized TokenDetail — no raw upstream shapes leak out.
  */
 export async function getCoinDetail(coinId: string): Promise<TokenDetail> {
+  const cacheKey = buildMarketCacheKey("coingecko:coin-detail", coinId);
+  const ttlSeconds = getMarketCacheFreshTtlSeconds();
+  const cacheEnabled = isRedisMarketCacheEnabled();
+  let cachedEntry: MarketCacheEntry<TokenDetail> | null = null;
+  let cacheUnavailable = false;
+
+  if (cacheEnabled) {
+    try {
+      cachedEntry = await readMarketCacheEntry<TokenDetail>(cacheKey);
+
+      if (cachedEntry && isFreshMarketCacheEntry(cachedEntry)) {
+        return withMarketDataStatus(cachedEntry.value, {
+          cacheStatus: "hit",
+          lastFetchedAt: cachedEntry.fetchedAt,
+          cacheKey,
+          ttlSeconds,
+        });
+      }
+    } catch {
+      cacheUnavailable = true;
+    }
+  }
+
+  try {
+    const detail = await fetchCoinDetailFromUpstream(coinId);
+    const fetchedAt = new Date().toISOString();
+
+    if (cacheEnabled) {
+      try {
+        await writeMarketCacheEntry(cacheKey, detail, fetchedAt);
+      } catch {
+        cacheUnavailable = true;
+      }
+    }
+
+    return withMarketDataStatus(detail, {
+      cacheStatus: cacheUnavailable
+        ? "unavailable"
+        : cacheEnabled && cachedEntry
+          ? "refreshed"
+          : cacheEnabled
+            ? "miss"
+            : "disabled",
+      lastFetchedAt: fetchedAt,
+      cacheKey,
+      ttlSeconds,
+    });
+  } catch (err) {
+    if (cachedEntry) {
+      return withMarketDataStatus(cachedEntry.value, {
+        cacheStatus: "stale_fallback",
+        lastFetchedAt: cachedEntry.fetchedAt,
+        cacheKey,
+        ttlSeconds,
+        fallbackError: err,
+      });
+    }
+
+    throw err;
+  }
+}
+
+function withMarketDataStatus(
+  detail: TokenDetail,
+  status: TokenMarketDataStatus
+): TokenDetail {
+  return {
+    ...detail,
+    marketDataStatus: status,
+  };
+}
+
+async function fetchCoinDetailFromUpstream(coinId: string): Promise<TokenDetail> {
   const url = `${COINGECKO_BASE}/coins/${encodeURIComponent(coinId)}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`;
   const res = await fetch(url, { headers: buildHeaders() });
 

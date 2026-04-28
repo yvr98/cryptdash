@@ -75,6 +75,40 @@ function previewAddress(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+function formatFetchedAt(value: string | null): string {
+  if (!value) return "Not cached";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unknown";
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
+}
+
+function cacheStatusLabel(
+  status: TokenDetailPageData["marketDataStatus"]["cacheStatus"],
+): string {
+  switch (status) {
+    case "hit":
+      return "Redis cache hit";
+    case "miss":
+      return "Redis cache miss";
+    case "refreshed":
+      return "Redis cache refreshed";
+    case "stale_fallback":
+      return "Stale cache fallback";
+    case "unavailable":
+      return "Cache unavailable";
+    case "disabled":
+      return "Live fetch";
+  }
+}
+
 function uniqueUpstreamErrors(
   errors: TokenDetailPageData["dataState"]["errors"],
 ) {
@@ -227,6 +261,25 @@ export function TokenDetailShell({ data }: TokenDetailShellProps) {
               <span className="text-xs text-[color:var(--muted)]">24h</span>
             </div>
 
+            <div
+              data-testid="market-data-freshness"
+              className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[color:var(--muted)]"
+            >
+              <span className="rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-2 py-1 font-medium text-[color:var(--foreground)]">
+                {cacheStatusLabel(data.marketDataStatus.cacheStatus)}
+              </span>
+              <span>
+                Last fetched{" "}
+                {data.marketDataStatus.lastFetchedAt ? (
+                  <time dateTime={data.marketDataStatus.lastFetchedAt}>
+                    {formatFetchedAt(data.marketDataStatus.lastFetchedAt)}
+                  </time>
+                ) : (
+                  formatFetchedAt(null)
+                )}
+              </span>
+            </div>
+
             {/* Market stats grid */}
             <div className="mt-4">
               <MarketStats data={data.marketData} />
@@ -253,7 +306,9 @@ export function TokenDetailShell({ data }: TokenDetailShellProps) {
                 ))}
               </div>
               <p className="mt-2 text-xs text-[color:var(--muted)]">
-                Showing available data. Try refreshing in a moment.
+                {data.marketDataStatus.cacheStatus === "stale_fallback"
+                  ? "Showing cached market data. Try refreshing in a moment."
+                  : "Showing available data. Try refreshing in a moment."}
               </p>
             </section>
           )}

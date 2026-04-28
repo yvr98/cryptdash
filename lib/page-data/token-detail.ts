@@ -12,7 +12,12 @@
 // never fabricates data when the real upstream source failed.
 // =============================================================================
 
-import { getCoinDetail, type TokenDetail } from "@/lib/api/coingecko";
+import {
+  getCoinDetail,
+  type TokenDetail,
+  type TokenMarketDataCacheStatus,
+} from "@/lib/api/coingecko";
+import { DEFAULT_MARKET_CACHE_FRESH_TTL_SECONDS } from "@/lib/api/market-cache";
 import { fetchPoolsForToken } from "@/lib/api/geckoterminal";
 import {
   isUpstreamError,
@@ -68,9 +73,17 @@ export interface DataState {
   errors: UpstreamErrorInfo[];
 }
 
+export interface MarketDataStatus {
+  cacheStatus: TokenMarketDataCacheStatus;
+  lastFetchedAt: string | null;
+  cacheKey: string | null;
+  ttlSeconds: number;
+}
+
 export interface TokenDetailPageData {
   token: Token;
   marketData: MarketData;
+  marketDataStatus: MarketDataStatus;
   priceContext: {
     marketCapRank: number | null;
   };
@@ -193,6 +206,15 @@ function toErrorInfo(err: unknown): UpstreamErrorInfo {
   };
 }
 
+function getDefaultMarketDataStatus(): MarketDataStatus {
+  return {
+    cacheStatus: "disabled",
+    lastFetchedAt: null,
+    cacheKey: null,
+    ttlSeconds: DEFAULT_MARKET_CACHE_FRESH_TTL_SECONDS,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Pool fetching with error tracking
 // ---------------------------------------------------------------------------
@@ -258,6 +280,11 @@ export async function getTokenDetailPageData(
 
   try {
     detail = await fetchCoinDetail(coinId);
+
+    if (detail.marketDataStatus?.cacheStatus === "stale_fallback") {
+      upstreamErrors.push(toErrorInfo(detail.marketDataStatus.fallbackError));
+      dataStatus = "upstream_error";
+    }
   } catch (err) {
     // 404 still propagates to trigger Next.js notFound()
     if (isUpstreamError(err) && err.category === "not_found") {
@@ -309,6 +336,14 @@ export async function getTokenDetailPageData(
   return {
     token: detail.token,
     marketData: detail.token.marketData ?? emptyMarketData,
+    marketDataStatus: detail.marketDataStatus
+      ? {
+          cacheStatus: detail.marketDataStatus.cacheStatus,
+          lastFetchedAt: detail.marketDataStatus.lastFetchedAt,
+          cacheKey: detail.marketDataStatus.cacheKey,
+          ttlSeconds: detail.marketDataStatus.ttlSeconds,
+        }
+      : getDefaultMarketDataStatus(),
     priceContext: {
       marketCapRank: detail.token.marketCapRank ?? null,
     },
