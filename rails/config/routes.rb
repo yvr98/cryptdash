@@ -15,6 +15,8 @@ Rails.application.routes.draw do
       delete "watchlist_items/:coin_id",
              to: "watchlist_items#destroy",
              as: :watchlist_item
+      resources :price_alert_rules, only: [:index, :create, :destroy]
+      resources :alert_events, only: [:index]
 
       get  "pools/:network_id/:pool_address/snapshots",
            to: "pool_snapshots#index",

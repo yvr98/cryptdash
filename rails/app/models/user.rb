@@ -3,6 +3,8 @@ class User < ApplicationRecord
 
   has_many :auth_sessions, dependent: :destroy
   has_many :watchlist_items, dependent: :destroy
+  has_many :price_alert_rules, dependent: :destroy
+  has_many :alert_events, dependent: :destroy
 
   before_validation :normalize_email
 
